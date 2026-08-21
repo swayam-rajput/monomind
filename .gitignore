@@ -1,0 +1,12 @@
+node_modules/
+.next/
+dist/
+.turbo/
+*.log
+.env
+.env.local
+.DS_Store
+/packages/db/prisma/dev.db
+/packages/db/prisma/dev.db-journal
+/data/lancedb/
+.kiro/settings/mcp.json
