@@ -11,6 +11,7 @@ accounts.
 - **Ollama** (for the default "Local" mode) — install from
   [ollama.com](https://ollama.com), then pull the two models Monome uses:
 
+
   ```
   ollama pull nomic-embed-text
   ollama pull llama3.1:8b
