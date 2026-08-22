@@ -1,162 +1,55 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import type { ImportSummary } from "@monome/types";
-
-type Status = "idle" | "loading" | "embedding" | "generating-notes" | "done" | "error";
-
-interface EmbedProgress {
-  current: number;
-  total: number;
-  failedChunks: number;
-  providerErrors: string[];
-}
-
-interface NotesProgress {
-  current: number;
-  total: number;
-  failedNotes: number;
-  providerErrors: string[];
-}
+import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
+import {
+  getImportJobState,
+  subscribeImportJob,
+  runImportJob,
+  isImportJobRunning,
+  type ImportJobState,
+} from "@/lib/importJobStore";
 
 export default function ImportPage() {
-  const [status, setStatus] = useState<Status>("idle");
-  const [summary, setSummary] = useState<ImportSummary | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  // Subscribes to the module-level job store (see importJobStore.ts)
+  // instead of owning this state locally - the import/embed/notes
+  // pipeline keeps running via that store even if this page unmounts
+  // (e.g. the user switches tabs), and re-mounting here just resumes
+  // showing whatever progress the store already has.
+  const [job, setJob] = useState<ImportJobState>(getImportJobState());
   const [pastedText, setPastedText] = useState("");
-  const [embedProgress, setEmbedProgress] = useState<EmbedProgress | null>(null);
-  const [notesProgress, setNotesProgress] = useState<NotesProgress | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  async function runImport(request: () => Promise<Response>) {
-    setStatus("loading");
-    setError(null);
-    setSummary(null);
-    setEmbedProgress(null);
-    setNotesProgress(null);
+  useEffect(() => subscribeImportJob(setJob), []);
 
-    try {
-      const res = await request();
-      const body = await res.json();
-
-      if (!res.ok) {
-        setError(body.error ?? "Import failed.");
-        setStatus("error");
-        return;
-      }
-
-      const importSummary = body as ImportSummary;
-      setSummary(importSummary);
-
-      if (importSummary.importedConversationIds.length > 0) {
-        await runEmbedding(importSummary.importedConversationIds);
-        await runNoteGeneration(importSummary.importedConversationIds);
-      }
-
-      setStatus("done");
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Import failed.");
-      setStatus("error");
-    }
-  }
-
-  async function runEmbedding(conversationIds: string[]) {
-    setStatus("embedding");
-    const providerErrors: string[] = [];
-    let failedChunks = 0;
-
-    for (let i = 0; i < conversationIds.length; i++) {
-      setEmbedProgress({ current: i + 1, total: conversationIds.length, failedChunks, providerErrors });
-
-      try {
-        const res = await fetch("/api/embed", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ conversationId: conversationIds[i] }),
-        });
-        const body = await res.json();
-
-        if (!res.ok) {
-          // A conversation-level failure (e.g. Ollama isn't running) - stop
-          // the loop early rather than retrying the same broken call for
-          // every remaining conversation.
-          providerErrors.push(body.error ?? "Embedding failed.");
-          break;
-        }
-
-        failedChunks += body.failedCount ?? 0;
-      } catch (err) {
-        providerErrors.push(err instanceof Error ? err.message : "Embedding failed.");
-        break;
-      }
-    }
-
-    setEmbedProgress({ current: conversationIds.length, total: conversationIds.length, failedChunks, providerErrors });
-  }
-
-  async function runNoteGeneration(conversationIds: string[]) {
-    setStatus("generating-notes");
-    const providerErrors: string[] = [];
-    let failedNotes = 0;
-
-    for (let i = 0; i < conversationIds.length; i++) {
-      setNotesProgress({ current: i + 1, total: conversationIds.length, failedNotes, providerErrors });
-
-      try {
-        const res = await fetch("/api/notes/generate", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ conversationId: conversationIds[i] }),
-        });
-        const body = await res.json();
-
-        if (!res.ok) {
-          // Conversation-level failure (e.g. provider unreachable) - stop
-          // rather than repeating the same broken call for every remaining
-          // conversation.
-          providerErrors.push(body.error ?? "Note generation failed.");
-          break;
-        }
-
-        if (!body.ok) {
-          // Per-conversation failure (bad JSON after retry, etc) - log and
-          // keep going, same pattern as per-chunk embedding failures.
-          failedNotes++;
-        }
-      } catch (err) {
-        providerErrors.push(err instanceof Error ? err.message : "Note generation failed.");
-        break;
-      }
-    }
-
-    setNotesProgress({ current: conversationIds.length, total: conversationIds.length, failedNotes, providerErrors });
-  }
+  const running = isImportJobRunning();
 
   async function handleFileSubmit(e: React.FormEvent) {
     e.preventDefault();
     const file = fileInputRef.current?.files?.[0];
     if (!file) {
-      setError("Choose a .zip file first.");
-      setStatus("error");
+      toast.error("Choose a .zip file first.");
       return;
     }
 
     const formData = new FormData();
     formData.append("file", file);
 
-    await runImport(() => fetch("/api/import", { method: "POST", body: formData }));
+    await runImportJob(() => fetch("/api/import", { method: "POST", body: formData }));
   }
 
   async function handlePasteSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!pastedText.trim()) {
-      setError("Paste some conversation JSON first.");
-      setStatus("error");
+      toast.error("Paste some conversation JSON first.");
       return;
     }
 
-    await runImport(() =>
+    await runImportJob(() =>
       fetch("/api/import", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -165,62 +58,51 @@ export default function ImportPage() {
     );
   }
 
+  const { phase, error, summary, embedProgress, notesProgress } = job;
+
   return (
     <main className="mx-auto flex max-w-2xl flex-col gap-10 p-8">
       <div>
-        <h1 className="text-2xl font-semibold">Import conversations</h1>
+        <h1 className="text-2xl font-bold">Import conversations</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Everything below runs locally and writes straight to your SQLite database. No AI calls happen during
-          import.
+          Everything below runs locally and writes straight to your SQLite database. Once started, importing,
+          embedding, and note generation keep running in the background even if you navigate to another page.
         </p>
       </div>
 
-      <form onSubmit={handleFileSubmit} className="flex flex-col gap-3 rounded-lg border border-border p-5">
+      <form onSubmit={handleFileSubmit} className="flex flex-col gap-3 rounded-lg border border-border bg-card p-6">
         <h2 className="font-medium">ChatGPT export (.zip)</h2>
         <p className="text-sm text-muted-foreground">
           Upload the .zip file you get from ChatGPT Settings &rarr; Data controls &rarr; Export data. We look for
           conversations.json inside it.
         </p>
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept=".zip"
-          className="rounded border border-border bg-background p-2 text-sm"
-        />
-        <button
-          type="submit"
-          disabled={status === "loading" || status === "embedding" || status === "generating-notes"}
-          className="w-fit rounded bg-primary px-4 py-2 text-sm font-medium text-primary-foreground disabled:opacity-50"
-        >
-          {status === "loading" ? "Importing..." : "Import export"}
-        </button>
+        <Input ref={fileInputRef} type="file" accept=".zip" />
+        <Button type="submit" disabled={running} className="w-fit">
+          {phase === "importing" ? "Importing..." : "Import export"}
+        </Button>
       </form>
 
-      <form onSubmit={handlePasteSubmit} className="flex flex-col gap-3 rounded-lg border border-border p-5">
+      <form onSubmit={handlePasteSubmit} className="flex flex-col gap-3 rounded-lg border border-border bg-card p-6">
         <h2 className="font-medium">Paste a single conversation (for quick testing)</h2>
         <p className="text-sm text-muted-foreground">
           Paste either{" "}
-          <code className="rounded bg-muted px-1 py-0.5">{'{ "title", "messages": [{ "role", "content" }] }'}</code>{" "}
+          <code className="rounded-md bg-muted px-1 py-0.5">{'{ "title", "messages": [{ "role", "content" }] }'}</code>{" "}
           or a raw conversation object copied from conversations.json.
         </p>
-        <textarea
+        <Textarea
           value={pastedText}
           onChange={(e) => setPastedText(e.target.value)}
           rows={10}
           placeholder='{"title": "Test chat", "messages": [{"role": "user", "content": "Hello"}, {"role": "assistant", "content": "Hi there"}]}'
-          className="rounded border border-border bg-background p-2 font-mono text-xs"
+          className="font-mono text-xs"
         />
-        <button
-          type="submit"
-          disabled={status === "loading" || status === "embedding" || status === "generating-notes"}
-          className="w-fit rounded bg-primary px-4 py-2 text-sm font-medium text-primary-foreground disabled:opacity-50"
-        >
-          {status === "loading" ? "Importing..." : "Import pasted conversation"}
-        </button>
+        <Button type="submit" disabled={running} className="w-fit">
+          {phase === "importing" ? "Importing..." : "Import pasted conversation"}
+        </Button>
       </form>
 
-      {status === "embedding" && embedProgress && (
-        <div className="rounded-lg border border-border p-5">
+      {phase === "embedding" && embedProgress && (
+        <div className="rounded-lg border border-border bg-card p-6">
           <p className="text-sm font-medium">
             Embedding conversation {embedProgress.current} of {embedProgress.total}...
           </p>
@@ -239,8 +121,8 @@ export default function ImportPage() {
         </div>
       )}
 
-      {status === "generating-notes" && notesProgress && (
-        <div className="rounded-lg border border-border p-5">
+      {phase === "generating-notes" && notesProgress && (
+        <div className="rounded-lg border border-border bg-card p-6">
           <p className="text-sm font-medium">
             Generating notes for conversation {notesProgress.current} of {notesProgress.total}...
           </p>
@@ -258,14 +140,14 @@ export default function ImportPage() {
         </div>
       )}
 
-      {status === "error" && error && (
+      {phase === "error" && error && (
         <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-4 text-sm text-destructive">
           {error}
         </div>
       )}
 
-      {status === "done" && summary && (
-        <div className="rounded-lg border border-border p-5">
+      {phase === "done" && summary && (
+        <div className="rounded-lg border border-border bg-card p-6">
           <h2 className="font-medium">
             Imported {summary.importedCount} conversation{summary.importedCount === 1 ? "" : "s"}, skipped{" "}
             {summary.skippedCount} malformed
@@ -297,19 +179,47 @@ export default function ImportPage() {
             <p className="mt-3 text-sm">
               Generated notes for {notesProgress.total - notesProgress.failedNotes} of {notesProgress.total}{" "}
               conversation{notesProgress.total === 1 ? "" : "s"}.
-              {notesProgress.failedNotes > 0 &&
-                ` ${notesProgress.failedNotes} note${notesProgress.failedNotes === 1 ? "" : "s"} could not be generated (check server logs for details).`}
-              {notesProgress.providerErrors.length > 0 && (
-                <span className="mt-1 block text-destructive">{notesProgress.providerErrors[0]}</span>
-              )}
             </p>
           )}
 
           {summary.importedCount > 0 && (
-            <Link href="/conversations" className="mt-4 inline-block text-sm font-medium underline">
+            <Link href="/conversations" className="mt-4 inline-block text-sm font-medium text-[#0000ee] underline">
               View imported conversations &rarr;
             </Link>
           )}
+        </div>
+      )}
+
+      {phase === "done" && notesProgress && (notesProgress.failedNotes > 0 || notesProgress.providerErrors.length > 0) && (
+        <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-4 text-sm text-destructive">
+          <p className="font-medium">
+            {notesProgress.failedNotes} note{notesProgress.failedNotes === 1 ? "" : "s"} could not be generated.
+          </p>
+          {notesProgress.providerErrors.length > 0 && <p className="mt-1">{notesProgress.providerErrors[0]}</p>}
+          <p className="mt-2">
+            You can retry from the{" "}
+            <Link href="/conversations" className="underline">
+              Conversations page
+            </Link>{" "}
+            once the issue above is resolved (e.g. start Ollama) - a "Generate missing notes" button will appear
+            there.
+          </p>
+        </div>
+      )}
+
+      {phase === "done" && embedProgress && (embedProgress.failedChunks > 0 || embedProgress.providerErrors.length > 0) && (
+        <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-4 text-sm text-destructive">
+          <p className="font-medium">
+            {embedProgress.failedChunks} chunk{embedProgress.failedChunks === 1 ? "" : "s"} failed to embed.
+          </p>
+          {embedProgress.providerErrors.length > 0 && <p className="mt-1">{embedProgress.providerErrors[0]}</p>}
+          <p className="mt-2">
+            Retryable from each conversation's detail page under{" "}
+            <Link href="/conversations" className="underline">
+              Conversations
+            </Link>
+            .
+          </p>
         </div>
       )}
     </main>

@@ -31,14 +31,14 @@ export default async function ConversationDetailPage({ params }: { params: { id:
       </Link>
 
       <div>
-        <h1 className="text-2xl font-semibold">{conversation.title}</h1>
+        <h1 className="text-2xl font-bold">{conversation.title}</h1>
         <p className="text-sm text-muted-foreground">
           {conversation.source} &middot; {conversation.createdAt.toLocaleString()} &middot; {conversation.messages.length}{" "}
           messages
         </p>
       </div>
 
-      <section className="rounded-lg border border-border p-5">
+      <section className="rounded-lg border border-border bg-card p-6">
         <h2 className="font-medium">Note</h2>
         {note ? (
           <div className="mt-2 flex flex-col gap-3 text-sm">
@@ -52,7 +52,7 @@ export default async function ConversationDetailPage({ params }: { params: { id:
             {topics.length > 0 && (
               <div className="flex flex-wrap gap-1">
                 {topics.map((t, i) => (
-                  <span key={i} className="rounded-full bg-muted px-2 py-0.5 text-xs">
+                  <span key={i} className="rounded-pill bg-muted px-2 py-0.5 text-xs">
                     {t}
                   </span>
                 ))}
@@ -97,7 +97,7 @@ export default async function ConversationDetailPage({ params }: { params: { id:
         )}
       </section>
 
-      <section className="rounded-lg border border-border p-5">
+      <section className="rounded-lg border border-border bg-card p-6">
         <h2 className="font-medium">Embedding status</h2>
         <p className="mt-1 text-sm text-muted-foreground">
           {conversation.chunks.length} chunk{conversation.chunks.length === 1 ? "" : "s"} &middot; {doneCount} done
@@ -109,7 +109,7 @@ export default async function ConversationDetailPage({ params }: { params: { id:
         {conversation.chunks.length > 0 && (
           <ul className="mt-4 flex flex-col gap-2 text-xs">
             {conversation.chunks.map((chunk) => (
-              <li key={chunk.id} className="rounded border border-border p-2">
+              <li key={chunk.id} className="rounded-md border border-border p-2">
                 <div className="flex items-center justify-between">
                   <span className="font-mono">
                     chunk #{chunk.order} &middot; ~{chunk.tokenEstimate} tokens
@@ -136,7 +136,7 @@ export default async function ConversationDetailPage({ params }: { params: { id:
       <section className="flex flex-col gap-3">
         <h2 className="font-medium">Messages</h2>
         {conversation.messages.map((m) => (
-          <div key={m.id} className="rounded-lg border border-border p-4">
+          <div key={m.id} className="rounded-lg border border-border bg-card p-4">
             <p className="text-xs font-medium uppercase text-muted-foreground">{m.role}</p>
             <p className="mt-1 whitespace-pre-wrap text-sm">{m.content}</p>
           </div>

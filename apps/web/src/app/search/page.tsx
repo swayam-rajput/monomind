@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import type { SearchApiResult } from "@/app/api/search/route";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 
 type Status = "idle" | "checking" | "empty-db" | "searching" | "done" | "error";
 
@@ -65,10 +67,10 @@ export default function SearchPage() {
   if (status === "empty-db") {
     return (
       <main className="mx-auto flex max-w-2xl flex-col gap-6 p-8">
-        <h1 className="text-2xl font-semibold">Search</h1>
+        <h1 className="text-2xl font-bold">Search</h1>
         <p className="text-sm text-muted-foreground">
           Nothing imported yet.{" "}
-          <Link href="/import" className="underline">
+          <Link href="/import" className="text-[#0000ee] underline">
             Import something first
           </Link>{" "}
           before you can search.
@@ -79,23 +81,19 @@ export default function SearchPage() {
 
   return (
     <main className="mx-auto flex max-w-2xl flex-col gap-6 p-8">
-      <h1 className="text-2xl font-semibold">Search</h1>
+      <h1 className="text-2xl font-bold">Search</h1>
 
       <form onSubmit={handleSearch} className="flex gap-2">
-        <input
+        <Input
           type="text"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Search your conversations..."
-          className="flex-1 rounded border border-border bg-background p-2 text-sm"
+          className="flex-1"
         />
-        <button
-          type="submit"
-          disabled={status === "searching"}
-          className="rounded bg-primary px-4 py-2 text-sm font-medium text-primary-foreground disabled:opacity-50"
-        >
+        <Button type="submit" disabled={status === "searching"}>
           {status === "searching" ? "Searching..." : "Search"}
-        </button>
+        </Button>
       </form>
 
       {status === "searching" && (
@@ -118,10 +116,10 @@ export default function SearchPage() {
           ) : (
             <ul className="flex flex-col gap-4">
               {results.map((r) => (
-                <li key={r.chunkId} className="rounded-lg border border-border p-4">
+                <li key={r.chunkId} className="rounded-lg border border-border bg-card p-4">
                   <div className="flex items-start justify-between gap-4">
                     <div>
-                      <Link href={`/conversations/${r.conversationId}`} className="font-medium underline">
+                      <Link href={`/conversations/${r.conversationId}`} className="font-medium text-[#0000ee] underline">
                         {r.note?.titleOverride ?? r.conversationTitle}
                       </Link>
                       <p className="text-xs text-muted-foreground">

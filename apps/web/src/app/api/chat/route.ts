@@ -28,13 +28,22 @@ const NO_EVIDENCE_MESSAGE = "I couldn't find anything relevant in your imported 
  */
 export async function POST(request: NextRequest) {
   const body = await request.json();
-  const { question } = body as { question?: string };
+  const { question, sessionId } = body as { question?: string; sessionId?: string };
 
   if (!question || question.trim().length === 0) {
     return new Response(JSON.stringify({ error: "'question' is required." }), { status: 400 });
   }
+  if (!sessionId) {
+    return new Response(JSON.stringify({ error: "'sessionId' is required." }), { status: 400 });
+  }
 
   const provider = getActiveProvider();
+
+  // Persist the user's question immediately, before doing anything AI-
+  // related - so it survives a refresh even if retrieval/generation fails.
+  await prisma.chatMessage.create({
+    data: { sessionId, role: "user", content: question },
+  });
 
   const stream = new ReadableStream<Uint8Array>({
     async start(controller) {
@@ -49,6 +58,9 @@ export async function POST(request: NextRequest) {
           send({ type: "citations", citations: [] });
           send({ type: "chunk", text: NO_EVIDENCE_MESSAGE });
           send({ type: "done" });
+          await prisma.chatMessage.create({
+            data: { sessionId, role: "assistant", content: NO_EVIDENCE_MESSAGE, citations: "[]" },
+          });
           controller.close();
           return;
         }
@@ -92,9 +104,32 @@ export async function POST(request: NextRequest) {
 
         send({ type: "citations", citations });
         send({ type: "done" });
+
+        await prisma.chatMessage.create({
+          data: {
+            sessionId,
+            role: "assistant",
+            content: fullAnswer,
+            citations: JSON.stringify(citations),
+          },
+        });
+
         controller.close();
       } catch (err) {
-        send({ type: "error", error: err instanceof Error ? err.message : "Chat failed." });
+        // Persist a record of the failure too, so a refresh doesn't just
+        // make the question look like it went unanswered with no
+        // explanation.
+        const errorMessage = err instanceof Error ? err.message : "Chat failed.";
+        send({ type: "error", error: errorMessage });
+        await prisma.chatMessage
+          .create({
+            data: { sessionId, role: "assistant", content: `Error: ${errorMessage}`, citations: "[]" },
+          })
+          .catch(() => {
+            // If even saving the error fails, there's nothing more useful
+            // we can do here - the stream has already reported the error
+            // to the client.
+          });
         controller.close();
       }
     },

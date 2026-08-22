@@ -3,6 +3,9 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
 
 interface NoteData {
   id: string;
@@ -123,87 +126,51 @@ export function NoteEditor({ note }: { note: NoteData }) {
 
       <div>
         <label className="text-xs font-medium uppercase text-muted-foreground">Title override</label>
-        <input
+        <Input
           value={titleOverride}
           onChange={(e) => setTitleOverride(e.target.value)}
           placeholder={note.conversationTitle}
-          className="mt-1 w-full rounded border border-border bg-background p-2 text-sm"
+          className="mt-1"
         />
       </div>
 
       <div>
         <label className="text-xs font-medium uppercase text-muted-foreground">Summary</label>
-        <textarea
-          value={summary}
-          onChange={(e) => setSummary(e.target.value)}
-          rows={3}
-          className="mt-1 w-full rounded border border-border bg-background p-2 text-sm"
-        />
+        <Textarea value={summary} onChange={(e) => setSummary(e.target.value)} rows={3} className="mt-1" />
       </div>
 
       <div>
         <label className="text-xs font-medium uppercase text-muted-foreground">Topics (comma-separated)</label>
-        <input
-          value={topics}
-          onChange={(e) => setTopics(e.target.value)}
-          className="mt-1 w-full rounded border border-border bg-background p-2 text-sm"
-        />
+        <Input value={topics} onChange={(e) => setTopics(e.target.value)} className="mt-1" />
       </div>
 
       <div>
         <label className="text-xs font-medium uppercase text-muted-foreground">Key ideas (one per line)</label>
-        <textarea
-          value={keyIdeas}
-          onChange={(e) => setKeyIdeas(e.target.value)}
-          rows={4}
-          className="mt-1 w-full rounded border border-border bg-background p-2 text-sm"
-        />
+        <Textarea value={keyIdeas} onChange={(e) => setKeyIdeas(e.target.value)} rows={4} className="mt-1" />
       </div>
 
       <div>
         <label className="text-xs font-medium uppercase text-muted-foreground">Decisions (one per line)</label>
-        <textarea
-          value={decisions}
-          onChange={(e) => setDecisions(e.target.value)}
-          rows={3}
-          className="mt-1 w-full rounded border border-border bg-background p-2 text-sm"
-        />
+        <Textarea value={decisions} onChange={(e) => setDecisions(e.target.value)} rows={3} className="mt-1" />
       </div>
 
       <div>
         <label className="text-xs font-medium uppercase text-muted-foreground">Open questions (one per line)</label>
-        <textarea
-          value={openQuestions}
-          onChange={(e) => setOpenQuestions(e.target.value)}
-          rows={3}
-          className="mt-1 w-full rounded border border-border bg-background p-2 text-sm"
-        />
+        <Textarea value={openQuestions} onChange={(e) => setOpenQuestions(e.target.value)} rows={3} className="mt-1" />
       </div>
 
       {error && <p className="text-sm text-destructive">{error}</p>}
 
       <div className="flex flex-wrap gap-2">
-        <button
-          onClick={handleSave}
-          disabled={saveStatus === "saving"}
-          className="rounded bg-primary px-4 py-2 text-sm font-medium text-primary-foreground disabled:opacity-50"
-        >
+        <Button onClick={handleSave} disabled={saveStatus === "saving"}>
           {saveStatus === "saving" ? "Saving..." : "Save changes"}
-        </button>
-        <button
-          onClick={handleRegenerate}
-          disabled={regenStatus === "regenerating"}
-          className="rounded border border-border px-4 py-2 text-sm font-medium disabled:opacity-50"
-        >
+        </Button>
+        <Button variant="secondary" onClick={handleRegenerate} disabled={regenStatus === "regenerating"}>
           {regenStatus === "regenerating" ? "Regenerating..." : "Regenerate from source"}
-        </button>
-        <button
-          onClick={handleDelete}
-          disabled={deleteStatus === "deleting"}
-          className="rounded border border-destructive/50 px-4 py-2 text-sm font-medium text-destructive disabled:opacity-50"
-        >
+        </Button>
+        <Button variant="destructive" onClick={handleDelete} disabled={deleteStatus === "deleting"}>
           {deleteStatus === "deleting" ? "Deleting..." : "Delete note"}
-        </button>
+        </Button>
         {saveStatus === "saved" && <span className="self-center text-sm text-green-600">Saved.</span>}
       </div>
     </>

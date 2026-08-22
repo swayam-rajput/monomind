@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 
 type ProviderChoice = "ollama" | "openai";
 
@@ -72,7 +74,7 @@ export default function SettingsPage() {
 
   return (
     <main className="mx-auto flex max-w-xl flex-col gap-6 p-8">
-      <h1 className="text-2xl font-semibold">Settings</h1>
+      <h1 className="text-2xl font-bold">Settings</h1>
       <p className="text-sm text-muted-foreground">
         Choose which AI backend Monome uses for embeddings, notes, and search. This choice lives in a local file
         (~/.monome/config.json) on your machine, not in the app database, and API keys are never sent anywhere except
@@ -80,18 +82,14 @@ export default function SettingsPage() {
       </p>
 
       {config && (
-        <div className="flex items-center justify-between rounded-lg border border-border p-4">
+        <div className="flex items-center justify-between rounded-lg border border-border bg-card p-4">
           <p className="text-sm">
             Currently active: <span className="font-medium">{config.provider}</span>
             {config.provider !== "ollama" && (config.hasApiKey ? " (key saved)" : " (no key saved)")}
           </p>
-          <button
-            onClick={handleTestConnection}
-            disabled={testStatus === "testing"}
-            className="rounded border border-border px-3 py-1.5 text-xs font-medium disabled:opacity-50"
-          >
+          <Button variant="secondary" size="sm" onClick={handleTestConnection} disabled={testStatus === "testing"}>
             {testStatus === "testing" ? "Testing..." : "Test connection"}
-          </button>
+          </Button>
         </div>
       )}
 
@@ -99,7 +97,7 @@ export default function SettingsPage() {
         <p className={`text-sm ${testStatus === "ok" ? "text-green-600" : "text-destructive"}`}>{testMessage}</p>
       )}
 
-      <form onSubmit={handleSave} className="flex flex-col gap-4 rounded-lg border border-border p-5">
+      <form onSubmit={handleSave} className="flex flex-col gap-4 rounded-lg border border-border bg-card p-6">
         <label className="flex items-start gap-2">
           <input
             type="radio"
@@ -132,22 +130,17 @@ export default function SettingsPage() {
         </label>
 
         {provider === "openai" && (
-          <input
+          <Input
             type="password"
             placeholder={config?.hasApiKey && config.provider === "openai" ? "Enter a new key to replace the saved one" : "sk-..."}
             value={apiKey}
             onChange={(e) => setApiKey(e.target.value)}
-            className="rounded border border-border bg-background p-2 text-sm"
           />
         )}
 
-        <button
-          type="submit"
-          disabled={saveStatus === "saving"}
-          className="w-fit rounded bg-primary px-4 py-2 text-sm font-medium text-primary-foreground disabled:opacity-50"
-        >
+        <Button type="submit" disabled={saveStatus === "saving"} className="w-fit">
           {saveStatus === "saving" ? "Validating & saving..." : "Save"}
-        </button>
+        </Button>
 
         {saveStatus === "saved" && <p className="text-sm text-green-600">Saved.</p>}
         {saveStatus === "error" && saveError && <p className="text-sm text-destructive">{saveError}</p>}

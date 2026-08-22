@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { Button } from "@/components/ui/button";
 
 export function RetryFailedChunksButton({ conversationId }: { conversationId: string }) {
   const [status, setStatus] = useState<"idle" | "retrying" | "error">("idle");
@@ -36,13 +37,9 @@ export function RetryFailedChunksButton({ conversationId }: { conversationId: st
 
   return (
     <div className="mt-3">
-      <button
-        onClick={handleRetry}
-        disabled={status === "retrying"}
-        className="rounded bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground disabled:opacity-50"
-      >
+      <Button onClick={handleRetry} disabled={status === "retrying"} size="sm">
         {status === "retrying" ? "Retrying..." : "Retry failed chunks"}
-      </button>
+      </Button>
       {status === "error" && error && <p className="mt-2 text-sm text-destructive">{error}</p>}
     </div>
   );
