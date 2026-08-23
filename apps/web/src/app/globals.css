@@ -80,9 +80,12 @@
     font-family: var(--font-geist), sans-serif;
   }
 
+  /* Sans is the product's default voice (per DESIGN-uber.md); mono is
+     reserved for code/pre/kbd below. Previously body used the mono
+     variable directly, which made the entire app monospace by accident. */
   body {
     @apply bg-background text-foreground;
-    font-family: var(--font-geist-mono), sans-serif;
+    font-family: var(--font-geist), sans-serif;
   }
 
   code,

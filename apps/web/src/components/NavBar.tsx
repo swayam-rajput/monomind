@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 const LINKS = [
   { href: "/import", label: "Import" },
@@ -29,7 +30,7 @@ export function NavBar() {
             Monome
           </Link>
         </div>
-        <div>
+        <div className="flex items-center">
           {LINKS.map((link) => {
             const active = pathname === link.href || pathname.startsWith(link.href + "/");
             return (
@@ -45,7 +46,10 @@ export function NavBar() {
               </Link>
             );
           })}
+        </div>
 
+        <div className="ml-auto">
+          <ThemeToggle />
         </div>
       </div>
     </nav>

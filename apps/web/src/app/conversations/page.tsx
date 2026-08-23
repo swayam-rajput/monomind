@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { prisma } from "@monome/db";
 import { BackfillNotesButton } from "@/components/BackfillNotesButton";
+import { GenerateNoteButton } from "@/app/conversations/[id]/GenerateNoteButton";
 
 // Server component: reads directly from SQLite via Prisma at request time.
 // No client-side fetching, no AI provider call - this page must always
@@ -37,8 +38,8 @@ export default async function ConversationsPage() {
             const topics: string[] = note ? JSON.parse(note.topics) : [];
 
             return (
-              <li key={c.id}>
-                <Link href={`/conversations/${c.id}`} className="flex flex-col gap-2 p-4 hover:bg-muted/50">
+              <li key={c.id} className="flex flex-col gap-2 p-4 hover:bg-muted/50">
+                <Link href={`/conversations/${c.id}`} className="">
                   <div className="flex items-center justify-between gap-4">
                     <p className="font-medium">{note?.titleOverride ?? c.title}</p>
                     <span className="whitespace-nowrap text-sm text-muted-foreground">
@@ -48,6 +49,7 @@ export default async function ConversationsPage() {
                   <p className="text-xs text-muted-foreground">
                     {c.source} &middot; {c.createdAt.toLocaleString()}
                   </p>
+                  </Link>
 
                   {note ? (
                     <>
@@ -63,9 +65,11 @@ export default async function ConversationsPage() {
                       )}
                     </>
                   ) : (
-                    <p className="text-xs italic text-muted-foreground">No note generated yet.</p>
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="text-xs italic text-muted-foreground">No note generated yet.</p>
+                      <GenerateNoteButton conversationId={c.id} stopPropagation />
+                    </div>
                   )}
-                </Link>
               </li>
             );
           })}

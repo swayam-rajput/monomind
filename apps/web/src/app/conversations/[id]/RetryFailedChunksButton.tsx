@@ -1,17 +1,19 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
 export function RetryFailedChunksButton({ conversationId }: { conversationId: string }) {
-  const [status, setStatus] = useState<"idle" | "retrying" | "error">("idle");
-  const [error, setError] = useState<string | null>(null);
+  const [retrying, setRetrying] = useState(false);
   const router = useRouter();
 
   async function handleRetry() {
-    setStatus("retrying");
-    setError(null);
+    setRetrying(true);
+    const toastId = toast.loading("Retrying failed chunks…", {
+      description: "This runs in the background — you can navigate away.",
+    });
 
     try {
       const res = await fetch("/api/embed/retry", {
@@ -22,25 +24,32 @@ export function RetryFailedChunksButton({ conversationId }: { conversationId: st
       const body = await res.json();
 
       if (!res.ok) {
-        setError(body.error ?? "Retry failed.");
-        setStatus("error");
-        return;
+        toast.error("Retry failed", { id: toastId, description: body.error ?? "Something went wrong." });
+      } else if (body.stillFailed > 0) {
+        toast.warning(`${body.stillFailed} chunk${body.stillFailed !== 1 ? "s" : ""} still failing`, {
+          id: toastId,
+          description: "Check that Ollama is running and try again.",
+        });
+        router.refresh();
+      } else {
+        toast.success("All chunks embedded", { id: toastId });
+        router.refresh();
       }
-
-      setStatus("idle");
-      router.refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Retry failed.");
-      setStatus("error");
+      toast.error("Retry failed", {
+        id: toastId,
+        description: err instanceof Error ? err.message : "Something went wrong.",
+      });
+    } finally {
+      setRetrying(false);
     }
   }
 
   return (
     <div className="mt-3">
-      <Button onClick={handleRetry} disabled={status === "retrying"} size="sm">
-        {status === "retrying" ? "Retrying..." : "Retry failed chunks"}
+      <Button onClick={handleRetry} disabled={retrying} size="sm">
+        {retrying ? "Retrying..." : "Retry failed chunks"}
       </Button>
-      {status === "error" && error && <p className="mt-2 text-sm text-destructive">{error}</p>}
     </div>
   );
 }

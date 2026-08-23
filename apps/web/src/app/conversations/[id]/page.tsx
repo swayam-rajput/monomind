@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@monome/db";
 import { RetryFailedChunksButton } from "./RetryFailedChunksButton";
+import { GenerateNoteButton } from "./GenerateNoteButton";
 
 export default async function ConversationDetailPage({ params }: { params: { id: string } }) {
   const conversation = await prisma.conversation.findUnique({
@@ -93,7 +94,10 @@ export default async function ConversationDetailPage({ params }: { params: { id:
             )}
           </div>
         ) : (
-          <p className="mt-1 text-sm text-muted-foreground">No note generated yet.</p>
+          <div className="mt-2 flex flex-col gap-3 text-sm">
+            <p className="text-muted-foreground">No note generated yet.</p>
+            <GenerateNoteButton conversationId={conversation.id} />
+          </div>
         )}
       </section>
 

@@ -1,14 +1,31 @@
 import { NextRequest, NextResponse } from "next/server";
-import { readConfig, writeConfig, validateOpenAiKey, type MonomeConfig } from "@monome/ai";
+import { readConfig, writeConfig, validateOpenAiKey, getActiveProvider, type MonomeConfig } from "@monome/ai";
 
 export const runtime = "nodejs";
 
 // Never echo the API key back in responses - only report whether one is set.
 function toClientSafeConfig(config: MonomeConfig) {
+  // getActiveProvider() just builds a provider object from config (no
+  // network call), so this is safe/cheap to call on every settings read -
+  // it's how /chat's model-selector chip knows which model is active
+  // without duplicating the provider->model mapping in the UI layer.
+  let chatModel: string | null = null;
+  let providerName: string | null = null;
+  try {
+    const provider = getActiveProvider(config);
+    chatModel = provider.chatModel;
+    providerName = provider.name;
+  } catch {
+    // e.g. BYOK selected but no key saved yet - leave model info null,
+    // the UI just won't show a chip rather than erroring.
+  }
+
   return {
     provider: config.provider,
     hasApiKey: Boolean(config.apiKey),
     ollamaBaseUrl: config.ollamaBaseUrl,
+    chatModel,
+    providerName,
   };
 }
 

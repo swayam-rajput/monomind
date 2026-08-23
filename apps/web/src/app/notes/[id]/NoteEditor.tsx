@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
+import { toast } from "sonner";
 
 interface NoteData {
   id: string;
@@ -29,9 +30,8 @@ export function NoteEditor({ note }: { note: NoteData }) {
   const [openQuestions, setOpenQuestions] = useState(note.openQuestions.join("\n"));
 
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
-  const [regenStatus, setRegenStatus] = useState<"idle" | "regenerating" | "error">("idle");
+  const [regenRunning, setRegenRunning] = useState(false);
   const [deleteStatus, setDeleteStatus] = useState<"idle" | "deleting" | "error">("idle");
-  const [error, setError] = useState<string | null>(null);
 
   function linesToArray(text: string): string[] {
     return text
@@ -48,7 +48,6 @@ export function NoteEditor({ note }: { note: NoteData }) {
 
   async function handleSave() {
     setSaveStatus("saving");
-    setError(null);
 
     const res = await fetch(`/api/notes/${note.id}`, {
       method: "PATCH",
@@ -65,36 +64,48 @@ export function NoteEditor({ note }: { note: NoteData }) {
 
     if (!res.ok) {
       const body = await res.json().catch(() => ({}));
-      setError(body.error ?? "Failed to save.");
+      toast.error("Failed to save", { description: body.error });
       setSaveStatus("error");
       return;
     }
 
     setSaveStatus("saved");
+    toast.success("Note saved");
   }
 
   async function handleRegenerate() {
     if (!confirm("This will overwrite your current edits with a freshly generated note. Continue?")) return;
 
-    setRegenStatus("regenerating");
-    setError(null);
+    setRegenRunning(true);
+    const toastId = toast.loading("Regenerating note…", {
+      description: "This runs in the background — you can navigate away.",
+    });
 
-    const res = await fetch(`/api/notes/${note.id}/regenerate`, { method: "POST" });
-    const body = await res.json();
+    try {
+      const res = await fetch(`/api/notes/${note.id}/regenerate`, { method: "POST" });
+      const body = await res.json();
 
-    if (!res.ok) {
-      setError(body.error ?? "Regeneration failed.");
-      setRegenStatus("error");
-      return;
+      if (!res.ok) {
+        toast.error("Regeneration failed", { id: toastId, description: body.error });
+        return;
+      }
+
+      // Update local form state with the freshly generated values.
+      setTitleOverride(body.titleOverride ?? "");
+      setSummary(body.summary);
+      setTopics((JSON.parse(body.topics) as string[]).join(", "));
+      setKeyIdeas((JSON.parse(body.keyIdeas) as string[]).join("\n"));
+      setDecisions((JSON.parse(body.decisions) as string[]).join("\n"));
+      setOpenQuestions((JSON.parse(body.openQuestions) as string[]).join("\n"));
+      toast.success("Note regenerated", { id: toastId });
+    } catch (err) {
+      toast.error("Regeneration failed", {
+        id: toastId,
+        description: err instanceof Error ? err.message : "Something went wrong.",
+      });
+    } finally {
+      setRegenRunning(false);
     }
-
-    setTitleOverride(body.titleOverride ?? "");
-    setSummary(body.summary);
-    setTopics((JSON.parse(body.topics) as string[]).join(", "));
-    setKeyIdeas((JSON.parse(body.keyIdeas) as string[]).join("\n"));
-    setDecisions((JSON.parse(body.decisions) as string[]).join("\n"));
-    setOpenQuestions((JSON.parse(body.openQuestions) as string[]).join("\n"));
-    setRegenStatus("idle");
   }
 
   async function handleDelete() {
@@ -105,11 +116,12 @@ export function NoteEditor({ note }: { note: NoteData }) {
 
     if (!res.ok) {
       const body = await res.json().catch(() => ({}));
-      setError(body.error ?? "Failed to delete.");
+      toast.error("Failed to delete", { description: body.error });
       setDeleteStatus("error");
       return;
     }
 
+    toast.success("Note deleted");
     router.push("/notes");
   }
 
@@ -159,19 +171,16 @@ export function NoteEditor({ note }: { note: NoteData }) {
         <Textarea value={openQuestions} onChange={(e) => setOpenQuestions(e.target.value)} rows={3} className="mt-1" />
       </div>
 
-      {error && <p className="text-sm text-destructive">{error}</p>}
-
       <div className="flex flex-wrap gap-2">
         <Button onClick={handleSave} disabled={saveStatus === "saving"}>
           {saveStatus === "saving" ? "Saving..." : "Save changes"}
         </Button>
-        <Button variant="secondary" onClick={handleRegenerate} disabled={regenStatus === "regenerating"}>
-          {regenStatus === "regenerating" ? "Regenerating..." : "Regenerate from source"}
+        <Button variant="secondary" onClick={handleRegenerate} disabled={regenRunning}>
+          {regenRunning ? "Regenerating..." : "Regenerate from source"}
         </Button>
         <Button variant="destructive" onClick={handleDelete} disabled={deleteStatus === "deleting"}>
           {deleteStatus === "deleting" ? "Deleting..." : "Delete note"}
         </Button>
-        {saveStatus === "saved" && <span className="self-center text-sm text-green-600">Saved.</span>}
       </div>
     </>
   );
