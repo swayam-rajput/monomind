@@ -65,10 +65,46 @@ export default function ImportPage() {
       <div>
         <h1 className="text-2xl font-bold">Import conversations</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Everything below runs locally and writes straight to your SQLite database. Once started, importing,
-          embedding, and note generation keep running in the background even if you navigate to another page.
+          Everything runs locally on your machine. Once started, all three phases (import → embed → notes) keep
+          running in the background even if you navigate to another page.
         </p>
       </div>
+
+      {/* ── Phase step indicator (shown while running or done) ─────── */}
+      {phase !== "idle" && phase !== "error" && (
+        <div className="flex items-center gap-2 text-xs">
+          {(
+            [
+              { key: "importing", label: "Import" },
+              { key: "embedding", label: "Embed" },
+              { key: "generating-notes", label: "Notes" },
+              { key: "done", label: "Done" },
+            ] as { key: typeof phase; label: string }[]
+          ).map((step, i, arr) => {
+            const phaseOrder: Record<string, number> = { importing: 0, embedding: 1, "generating-notes": 2, done: 3 };
+            const current = phaseOrder[phase] ?? 0;
+            const stepIdx = phaseOrder[step.key] ?? 0;
+            const isDone = stepIdx < current;
+            const isActive = stepIdx === current;
+            return (
+              <span key={step.key} className="flex items-center gap-2">
+                <span
+                  className={
+                    isDone
+                      ? "font-medium text-foreground"
+                      : isActive
+                        ? "shimmer text font-medium text-primary"
+                        : "text-muted-foreground"
+                  }
+                >
+                  {isDone ? "✓" : `${stepIdx + 1}.`} {step.label}
+                </span>
+                {i < arr.length - 1 && <span className="text-muted-foreground/40">›</span>}
+              </span>
+            );
+          })}
+        </div>
+      )}
 
       <form onSubmit={handleFileSubmit} className="flex flex-col gap-3 rounded-lg border border-border bg-card p-6">
         <h2 className="font-medium">ChatGPT export (.zip)</h2>
@@ -149,8 +185,17 @@ export default function ImportPage() {
       {phase === "done" && summary && (
         <div className="rounded-lg border border-border bg-card p-6">
           <h2 className="font-medium">
-            Imported {summary.importedCount} conversation{summary.importedCount === 1 ? "" : "s"}, skipped{" "}
-            {summary.skippedCount} malformed
+            Imported {summary.importedCount} conversation{summary.importedCount === 1 ? "" : "s"}
+            {summary.duplicateCount && summary.duplicateCount > 0 ? (
+              <span className="ml-1 text-muted-foreground">
+                · {summary.duplicateCount} already existed and {summary.duplicateCount === 1 ? "was" : "were"} skipped
+              </span>
+            ) : null}
+            {summary.skippedCount - (summary.duplicateCount ?? 0) > 0 ? (
+              <span className="ml-1 text-muted-foreground">
+                · {summary.skippedCount - (summary.duplicateCount ?? 0)} malformed and skipped
+              </span>
+            ) : null}
           </h2>
 
           {summary.warnings.length > 0 && (
@@ -183,7 +228,7 @@ export default function ImportPage() {
           )}
 
           {summary.importedCount > 0 && (
-            <Link href="/conversations" className="mt-4 inline-block text-sm font-medium text-[#0000ee] underline">
+            <Link href="/conversations" className="mt-4 inline-block text-sm font-medium text-link underline">
               View imported conversations &rarr;
             </Link>
           )}

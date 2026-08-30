@@ -3,6 +3,8 @@ import { notFound } from "next/navigation";
 import { prisma } from "@monome/db";
 import { RetryFailedChunksButton } from "./RetryFailedChunksButton";
 import { GenerateNoteButton } from "./GenerateNoteButton";
+import { DeleteConversationButton } from "./DeleteConversationButton";
+import { MessagesSection } from "./MessagesSection";
 
 export default async function ConversationDetailPage({ params }: { params: { id: string } }) {
   const conversation = await prisma.conversation.findUnique({
@@ -53,7 +55,7 @@ export default async function ConversationDetailPage({ params }: { params: { id:
             {topics.length > 0 && (
               <div className="flex flex-wrap gap-1">
                 {topics.map((t, i) => (
-                  <span key={i} className="rounded-pill bg-muted px-2 py-0.5 text-xs">
+                  <span key={i} className="rounded-full bg-muted px-2 py-0.5 text-xs">
                     {t}
                   </span>
                 ))}
@@ -137,14 +139,18 @@ export default async function ConversationDetailPage({ params }: { params: { id:
         )}
       </section>
 
-      <section className="flex flex-col gap-3">
-        <h2 className="font-medium">Messages</h2>
-        {conversation.messages.map((m) => (
-          <div key={m.id} className="rounded-lg border border-border bg-card p-4">
-            <p className="text-xs font-medium uppercase text-muted-foreground">{m.role}</p>
-            <p className="mt-1 whitespace-pre-wrap break-words text-sm">{m.content}</p>
-          </div>
-        ))}
+      <MessagesSection messages={conversation.messages} />
+
+      {/* Danger zone */}
+      <section className="rounded-lg border border-destructive/30 p-4">
+        <h2 className="text-sm font-medium text-destructive">Danger zone</h2>
+        <p className="mt-1 text-xs text-muted-foreground">
+          Permanently removes this conversation, its messages, generated note, and embedding records.
+          This cannot be undone.
+        </p>
+        <div className="mt-3">
+          <DeleteConversationButton conversationId={conversation.id} redirectAfter />
+        </div>
       </section>
     </main>
   );

@@ -12,14 +12,17 @@ interface Props {
 
 export function GenerateNoteButton({ conversationId, stopPropagation = false }: Props) {
   const router = useRouter();
-  const [running, setRunning] = useState(() => getNoteJobState().running);
+  const initial = getNoteJobState();
+  // Only show "Generating..." on THIS button, not every button on the page.
+  const [thisIsRunning, setThisIsRunning] = useState(
+    initial.activeConversationId === conversationId
+  );
   const [justFinished, setJustFinished] = useState(false);
 
   useEffect(() => {
     return subscribeNoteJob((s) => {
-      setRunning(s.running);
-      // If this specific conversation's note just finished, refresh the
-      // server component so the note section appears without a manual reload.
+      setThisIsRunning(s.activeConversationId === conversationId);
+
       if (!s.running && s.done.includes(conversationId)) {
         setJustFinished(true);
         router.refresh();
@@ -29,16 +32,14 @@ export function GenerateNoteButton({ conversationId, stopPropagation = false }: 
 
   async function handleClick(e: React.MouseEvent) {
     if (stopPropagation) e.stopPropagation();
-    // Fire and forget — the job runs in noteJobStore, survives navigation,
-    // and the Sonner toast (shown inside the store) keeps the user informed.
     void generateNoteBackground(conversationId);
   }
 
-  if (justFinished) return null; // note section will appear via router.refresh()
+  if (justFinished) return null;
 
   return (
-    <Button size="sm" onClick={handleClick} disabled={running}>
-      {running ? "Generating..." : "Generate note"}
+    <Button size="sm" onClick={handleClick} disabled={thisIsRunning}>
+      {thisIsRunning ? "Generating..." : "Generate note"}
     </Button>
   );
 }

@@ -40,7 +40,7 @@ export function SourceSkimSheet({ conversationId, onClose }: SourceSkimSheetProp
             {data && (
               <>
                 {new Date(data.createdAt).toLocaleString()} &middot;{" "}
-                <Link href={`/conversations/${data.id}`} className="text-[#0000ee] underline">
+                <Link href={`/conversations/${data.id}`} className="text-link underline">
                   Open full conversation
                 </Link>
               </>

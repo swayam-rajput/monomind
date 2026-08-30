@@ -168,7 +168,7 @@ export default function ChatPage() {
   const error = session?.error ?? null;
 
   return (
-    <SidebarProvider className="h-full min-h-0" style={{ "--sidebar-width": "15rem" } as CSSProperties}>
+    <SidebarProvider className="h-[calc(100dvh-2.5rem)] min-h-0" style={{ "--sidebar-width": "15rem" } as CSSProperties}>
       <ChatSidebar
         activeSessionId={sessionId}
         onSelectSession={handleSelectSession}

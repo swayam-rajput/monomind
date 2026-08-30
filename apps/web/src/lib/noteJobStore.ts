@@ -15,14 +15,22 @@ import { toast } from "sonner";
 
 export interface NoteJobState {
   running: boolean;
+  /** The specific conversation currently being generated, if any. */
+  activeConversationId: string | null;
   current: number;
   total: number;
   failed: number;
-  /** Ids of conversations whose notes were successfully generated this run. */
   done: string[];
 }
 
-let state: NoteJobState = { running: false, current: 0, total: 0, failed: 0, done: [] };
+let state: NoteJobState = {
+  running: false,
+  activeConversationId: null,
+  current: 0,
+  total: 0,
+  failed: 0,
+  done: [],
+};
 const listeners = new Set<(s: NoteJobState) => void>();
 
 function setState(patch: Partial<NoteJobState>) {
@@ -51,7 +59,7 @@ export async function generateNoteBackground(conversationId: string): Promise<vo
     return;
   }
 
-  setState({ running: true, current: 0, total: 1, failed: 0, done: [] });
+  setState({ running: true, activeConversationId: conversationId, current: 0, total: 1, failed: 0, done: [] });
 
   const toastId = toast.loading("Generating note…", {
     description: "This runs in the background — you can navigate away.",
@@ -62,20 +70,20 @@ export async function generateNoteBackground(conversationId: string): Promise<vo
 
     if (result.ok) {
       toast.success("Note generated", { id: toastId });
-      setState({ running: false, current: 1, done: [conversationId] });
+      setState({ running: false, activeConversationId: null, current: 1, done: [conversationId] });
     } else {
       toast.error("Note generation failed", {
         id: toastId,
         description: result.error ?? "Check that Ollama is running.",
       });
-      setState({ running: false, current: 1, failed: 1 });
+      setState({ running: false, activeConversationId: null, current: 1, failed: 1 });
     }
   } catch (err) {
     toast.error("Note generation failed", {
       id: toastId,
       description: err instanceof Error ? err.message : "Unexpected error.",
     });
-    setState({ running: false, current: 1, failed: 1 });
+    setState({ running: false, activeConversationId: null, current: 1, failed: 1 });
   }
 }
 
@@ -99,7 +107,7 @@ export async function backfillNotesBackground(): Promise<void> {
 
   if (targets.length === 0) return;
 
-  setState({ running: true, current: 0, total: targets.length, failed: 0, done: [] });
+  setState({ running: true, activeConversationId: null, current: 0, total: targets.length, failed: 0, done: [] });
 
   const toastId = toast.loading(`Generating notes (0 / ${targets.length})…`, {
     description: "Running in the background — you can navigate away.",
@@ -109,7 +117,7 @@ export async function backfillNotesBackground(): Promise<void> {
   const done: string[] = [];
 
   for (let i = 0; i < targets.length; i++) {
-    setState({ current: i + 1 });
+    setState({ current: i + 1, activeConversationId: targets[i].id });
 
     toast.loading(`Generating notes (${i + 1} / ${targets.length})…`, {
       id: toastId,
@@ -130,7 +138,7 @@ export async function backfillNotesBackground(): Promise<void> {
             id: toastId,
             description: result.error,
           });
-          setState({ running: false, failed: targets.length - i, done });
+          setState({ running: false, activeConversationId: null, failed: targets.length - i, done });
           return;
         }
       }
@@ -139,7 +147,7 @@ export async function backfillNotesBackground(): Promise<void> {
         id: toastId,
         description: err instanceof Error ? err.message : "Unexpected error.",
       });
-      setState({ running: false, failed: targets.length - i, done });
+      setState({ running: false, activeConversationId: null, failed: targets.length - i, done });
       return;
     }
   }
@@ -154,7 +162,7 @@ export async function backfillNotesBackground(): Promise<void> {
     });
   }
 
-  setState({ running: false, current: targets.length, failed, done });
+  setState({ running: false, activeConversationId: null, current: targets.length, failed, done });
 }
 
 async function generateOne(

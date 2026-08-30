@@ -1,5 +1,7 @@
 "use client";
 
+import { toast } from "sonner";
+
 /**
  * Module-level store for chat sessions and in-flight streaming, mirroring
  * importJobStore.ts. Keeping this outside React state means an active
@@ -136,6 +138,11 @@ export async function sendChatMessage(sessionId: string, question: string): Prom
     s.error = err instanceof Error ? err.message : "Chat failed.";
     s.messages = s.messages.slice(0, -1); // drop the empty assistant bubble
     notify();
+    // Toast the error so the user gets feedback even if they navigated away
+    // from /chat while the response was streaming.
+    toast.error("Chat failed", {
+      description: s.error,
+    });
   } finally {
     s.isStreaming = false;
     notify();

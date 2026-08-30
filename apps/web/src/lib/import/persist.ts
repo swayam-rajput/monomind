@@ -3,13 +3,11 @@ import type { ImportSummary, ImportWarning, ParsedConversation } from "@monome/t
 
 /**
  * Writes parsed conversations to SQLite as the immutable raw layer.
- * No transformation, summarization, or embedding happens here - just a
- * faithful store of what was parsed. Each conversation + its messages are
- * written in a single transaction so a failure partway through a
- * conversation can't leave orphaned messages.
  *
- * Conversations that fail to parse (passed in via `preSkipped`) are folded
- * into the same summary so the caller gets one combined report.
+ * Duplicate detection: a conversation is a duplicate if a record with the
+ * same title, source, AND message count already exists. Title-only dedup
+ * has too many false positives ("New chat" is extremely common); combining
+ * all three keeps it practical.
  */
 export async function persistParsedConversations(
   parsedConversations: ParsedConversation[],
@@ -20,8 +18,30 @@ export async function persistParsedConversations(
     reason: s.reason,
   }));
   const importedConversationIds: string[] = [];
+  let duplicateCount = 0;
 
   for (const conversation of parsedConversations) {
+    // Fetch candidates with the same title+source, then check message count
+    // in JS — Prisma v5 doesn't support filtering by relation aggregate
+    // count in a where clause without raw SQL.
+    const candidates = await prisma.conversation.findMany({
+      where: { title: conversation.title, source: conversation.source },
+      include: { _count: { select: { messages: true } } },
+    });
+
+    const isDuplicate = candidates.some(
+      (c) => c._count.messages === conversation.messages.length
+    );
+
+    if (isDuplicate) {
+      duplicateCount++;
+      warnings.push({
+        identifier: conversation.title,
+        reason: `Already imported (${conversation.messages.length} messages). Skipped.`,
+      });
+      continue;
+    }
+
     try {
       const id = await persistOne(conversation);
       importedConversationIds.push(id);
@@ -36,6 +56,7 @@ export async function persistParsedConversations(
   return {
     importedCount: importedConversationIds.length,
     skippedCount: warnings.length,
+    duplicateCount,
     warnings,
     importedConversationIds,
   };
@@ -50,7 +71,6 @@ async function persistOne(conversation: ParsedConversation): Promise<string> {
         create: conversation.messages.map((m) => ({
           role: m.role,
           content: m.content,
-          // Fall back to "now" if the source had no timestamp for this message.
           createdAt: m.createdAt ? new Date(m.createdAt) : new Date(),
         })),
       },

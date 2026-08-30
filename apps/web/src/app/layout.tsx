@@ -41,11 +41,10 @@ export default function RootLayout({
             enableSystem
             disableTransitionOnChange>
           <NavBar />
-          {/* NavBar is `fixed`, so it's removed from normal document flow and
-              would otherwise render on top of every page's content. pt-14
-              reserves that space (matches NavBar's actual height, see
-              NAVBAR_HEIGHT_PX below) instead of overlapping it. */}
-          <main className="h-dvh min-h-0 pt-10">{children}</main>
+          {/* NavBar is `fixed` (h-10 = 2.5rem = 40px). pt-10 pushes content
+              below it; overflow-auto lets scrollable pages work normally while
+              fixed-height children (like /chat) use h-full against this. */}
+          <main className="min-h-[calc(100dvh-2.5rem)] pt-10">{children}</main>
           <Toaster position="bottom-right" />
 
         </ThemeProvider>

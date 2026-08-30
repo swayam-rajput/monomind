@@ -23,7 +23,9 @@ function toClientSafeConfig(config: MonomeConfig) {
   return {
     provider: config.provider,
     hasApiKey: Boolean(config.apiKey),
-    ollamaBaseUrl: config.ollamaBaseUrl,
+    ollamaBaseUrl: config.ollamaBaseUrl ?? "",
+    ollamaChatModel: config.ollamaChatModel ?? "llama3.1:8b",
+    ollamaEmbedModel: config.ollamaEmbedModel ?? "nomic-embed-text",
     chatModel,
     providerName,
   };
@@ -35,14 +37,25 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   const body = await request.json();
-  const { provider, apiKey } = body as { provider: string; apiKey?: string };
+  const { provider, apiKey, ollamaChatModel, ollamaEmbedModel, ollamaBaseUrl } = body as {
+    provider: string;
+    apiKey?: string;
+    ollamaChatModel?: string;
+    ollamaEmbedModel?: string;
+    ollamaBaseUrl?: string;
+  };
 
   if (!["ollama", "openai", "anthropic", "gemini"].includes(provider)) {
     return NextResponse.json({ error: "Invalid provider." }, { status: 400 });
   }
 
   if (provider === "ollama") {
-    writeConfig({ provider: "ollama" });
+    writeConfig({
+      provider: "ollama",
+      ollamaBaseUrl: ollamaBaseUrl?.trim() || undefined,
+      ollamaChatModel: ollamaChatModel?.trim() || undefined,
+      ollamaEmbedModel: ollamaEmbedModel?.trim() || undefined,
+    });
     return NextResponse.json(toClientSafeConfig(readConfig()));
   }
 

@@ -24,6 +24,7 @@ export interface ImportJobState {
   summary: {
     importedCount: number;
     skippedCount: number;
+    duplicateCount?: number;
     warnings: { identifier: string; reason: string }[];
     importedConversationIds: string[];
   } | null;
@@ -82,7 +83,10 @@ export async function runImportJob(request: () => Promise<Response>): Promise<vo
     }
 
     setState({ phase: "done" });
-    toast.success(`Imported ${body.importedCount} conversation${body.importedCount === 1 ? "" : "s"}`, {
+    const dupMsg = body.duplicateCount && body.duplicateCount > 0
+      ? ` · ${body.duplicateCount} duplicate${body.duplicateCount === 1 ? "" : "s"} skipped`
+      : "";
+    toast.success(`Imported ${body.importedCount} conversation${body.importedCount === 1 ? "" : "s"}${dupMsg}`, {
       description: "Embedding and note generation finished.",
     });
   } catch (err) {
