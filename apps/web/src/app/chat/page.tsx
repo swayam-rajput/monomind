@@ -203,7 +203,7 @@ export default function ChatPage() {
             </div>
           ) : (
             <div className="chat-scroll min-h-0 flex-1 overflow-y-auto">
-              <div className="mx-auto flex max-w-[680px] flex-col gap-6 px-4 py-8">
+              <div className="mx-auto flex max-w-[680px] flex-col gap-4 px-4 py-8">
                 {messages.map((m) =>
                   m.role === "user" ? (
                     <UserBubble key={m.id} text={m.text} />
@@ -293,14 +293,14 @@ function AssistantBubble({
   return (
     <div className="group/message flex flex-col gap-0">
       {/* Header: assistant indicator (left) + hover-revealed action toolbar (right) */}
+          {isThinking && (
       <div className="mb-2 flex h-6 items-center justify-between">
         <div className="flex items-center gap-1.5">
-          {isThinking && (
             <span className="text-xs font-medium text-muted-foreground">Thinking…</span>
-          )}
         </div>
 
       </div>
+          )}
 
       {/* Body */}
       <div className="rounded-2xl border border-border bg-card px-5 py-4 text-sm leading-relaxed text-card-foreground shadow-2xs dark:border-white/8 dark:bg-white/5 dark:text-white/85">
@@ -350,23 +350,17 @@ function MessageActions({
   onEdit: () => void;
 }) {
   return (
-    <div className="flex items-center gap-0.5 rounded-full  p-0.5 opacity-0 transition-opacity group-hover/message:opacity-100">
-      {/* <button
-        onClick={onEdit}
-        title="Use as draft"
-        className="flex size-6 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-background hover:text-foreground"
-      >
-        <HugeiconsIcon icon={PencilEdit01Icon} strokeWidth={1.5} className="size-3.5" />
-      </button> */}
-
-      <button
-        onClick={onCopy}
-        title={isCopied ? "Copied" : "Copy response"}
-        className="flex size-6 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-background hover:text-foreground"
-      >
-        <HugeiconsIcon icon={isCopied ? Tick01Icon : Copy01Icon} strokeWidth={1.5} className="size-3.5" />
-      </button>
-    </div>
+  <button
+  onClick={onCopy}
+  title={isCopied ? "Copied" : "Copy response"}
+  className="flex size-6 items-center justify-center rounded-full text-muted-foreground opacity-0 transition-opacity group-hover/message:opacity-100 hover:bg-background hover:text-foreground"
+  >
+    <HugeiconsIcon
+      icon={isCopied ? Tick01Icon : Copy01Icon}
+      strokeWidth={1.5}
+      className="size-3.5"
+    />
+  </button>
   );
 }
 

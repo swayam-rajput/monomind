@@ -16,7 +16,7 @@ export default async function ConversationsPage() {
   });
 
   return (
-    <main className="mx-auto flex max-w-2xl flex-col gap-6 p-8">
+    <main className="mx-auto flex max-w-3xl flex-col gap-6 p-8">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Conversations</h1>
         <Link href="/import" className="text-sm font-medium text-[#0000ee] underline">

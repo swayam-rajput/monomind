@@ -11,7 +11,7 @@ export default async function NoteDetailPage({ params }: { params: { id: string 
   if (!note) notFound();
 
   return (
-    <main className="mx-auto flex max-w-2xl flex-col gap-6 p-8">
+    <main className="mx-auto flex max-w-3xl flex-col gap-6 p-8">
       <NoteEditor
         note={{
           id: note.id,

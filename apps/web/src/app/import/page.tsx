@@ -61,7 +61,7 @@ export default function ImportPage() {
   const { phase, error, summary, embedProgress, notesProgress } = job;
 
   return (
-    <main className="mx-auto flex max-w-2xl flex-col gap-10 p-8">
+    <main className="mx-auto flex max-w-3xl flex-col gap-10 p-8">
       <div>
         <h1 className="text-2xl font-bold">Import conversations</h1>
         <p className="mt-1 text-sm text-muted-foreground">

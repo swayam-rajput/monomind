@@ -26,7 +26,7 @@ export default async function ConversationDetailPage({ params }: { params: { id:
   const doneCount = conversation.chunks.filter((c) => c.embeddingStatus === "done").length;
 
   return (
-    <main className="mx-auto flex max-w-2xl flex-col gap-6 p-8">
+    <main className="mx-auto flex max-w-3xl flex-col gap-6 p-8">
       <Link href="/conversations" className="text-sm text-muted-foreground underline">
         &larr; All conversations
       </Link>
@@ -142,7 +142,7 @@ export default async function ConversationDetailPage({ params }: { params: { id:
         {conversation.messages.map((m) => (
           <div key={m.id} className="rounded-lg border border-border bg-card p-4">
             <p className="text-xs font-medium uppercase text-muted-foreground">{m.role}</p>
-            <p className="mt-1 whitespace-pre-wrap text-sm">{m.content}</p>
+            <p className="mt-1 whitespace-pre-wrap break-words text-sm">{m.content}</p>
           </div>
         ))}
       </section>

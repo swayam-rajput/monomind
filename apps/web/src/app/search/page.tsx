@@ -58,7 +58,7 @@ export default function SearchPage() {
 
   if (status === "checking") {
     return (
-      <main className="mx-auto flex max-w-2xl flex-col gap-6 p-8">
+      <main className="mx-auto flex max-w-3xl flex-col gap-6 p-8">
         <p className="text-sm text-muted-foreground">Loading...</p>
       </main>
     );
@@ -66,7 +66,7 @@ export default function SearchPage() {
 
   if (status === "empty-db") {
     return (
-      <main className="mx-auto flex max-w-2xl flex-col gap-6 p-8">
+      <main className="mx-auto flex max-w-3xl flex-col gap-6 p-8">
         <h1 className="text-2xl font-bold">Search</h1>
         <p className="text-sm text-muted-foreground">
           Nothing imported yet.{" "}
@@ -80,7 +80,7 @@ export default function SearchPage() {
   }
 
   return (
-    <main className="mx-auto flex max-w-2xl flex-col gap-6 p-8">
+    <main className="mx-auto flex max-w-3xl flex-col gap-6 p-8">
       <h1 className="text-2xl font-bold">Search</h1>
 
       <form onSubmit={handleSearch} className="flex gap-2">
