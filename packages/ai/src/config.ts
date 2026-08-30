@@ -17,6 +17,10 @@ export interface MonomeConfig {
   apiKey?: string;
   /** Optional overrides, mainly useful for testing against a non-default Ollama host. */
   ollamaBaseUrl?: string;
+  /** Chat model to use with Ollama. Defaults to "llama3.1:8b". */
+  ollamaChatModel?: string;
+  /** Embedding model to use with Ollama. Defaults to "nomic-embed-text". */
+  ollamaEmbedModel?: string;
 }
 
 const DEFAULT_CONFIG: MonomeConfig = {

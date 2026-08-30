@@ -108,6 +108,8 @@ export interface ImportWarning {
 export interface ImportSummary {
   importedCount: number;
   skippedCount: number;
+  /** Subset of skippedCount: conversations that were already in the database. */
+  duplicateCount?: number;
   warnings: ImportWarning[];
   /** Ids of the conversations that were successfully created, for convenience. */
   importedConversationIds: string[];

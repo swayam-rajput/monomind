@@ -19,7 +19,11 @@ export function getActiveProvider(config: MonomeConfig = readConfig()): LLMProvi
 function buildRawProvider(config: MonomeConfig): LLMProvider {
   switch (config.provider) {
     case "ollama":
-      return new OllamaProvider(config.ollamaBaseUrl);
+      return new OllamaProvider(
+        config.ollamaBaseUrl,
+        config.ollamaChatModel,
+        config.ollamaEmbedModel
+      );
     case "openai":
       if (!config.apiKey) {
         throw new Error("BYOK provider is set to OpenAI, but no API key is saved. Add one in Settings.");
