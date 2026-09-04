@@ -67,7 +67,7 @@
     --sidebar-ring: 0 0% 9%;
 
     /* ── Fonts ─────────────────────────────────────────────────────────── */
-    --font-geist: Geist;
+    --font-dm: 'DM Sans';
     --font-geist-mono: 'Geist Mono';
   }
 
@@ -124,7 +124,7 @@
     background: rgba(69, 149, 209, 0.3);
   }
   html {
-    font-family: var(--font-geist), system-ui, sans-serif;
+    font-family: var(--font-dm), system-ui, sans-serif;
     /* Prevent layout shift when scrollbar appears */
     scrollbar-gutter: stable;
   }
@@ -132,7 +132,7 @@
   body {
     background-color: hsl(var(--background));
     color: hsl(var(--foreground));
-    font-family: var(--font-geist), system-ui, sans-serif;
+    font-family: var(--font-dm), system-ui, sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
