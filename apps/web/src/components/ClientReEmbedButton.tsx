@@ -6,7 +6,7 @@ import { ReEmbedButton } from "./ReEmbedButton";
 interface ClientReEmbedButtonProps {
   conversationId: string;
   size?: "default" | "sm" | "lg";
-  variant?: "default" | "outline" | "ghost";
+  variant?: "default" | "outline" | "ghost" | "secondary";
   className?: string;
   stopPropagation?: boolean;
 }
