@@ -20,15 +20,61 @@ export class OllamaProvider implements LLMProvider {
   ) {}
 
   async chat(prompt: string): Promise<string> {
-    const body = await this.post("/api/generate", {
-      model: this.chatModel,
-      prompt,
-      stream: false,
-    });
-    if (typeof body.response !== "string") {
-      throw new Error("Ollama returned an unexpected response shape for /api/generate.");
+    if (!prompt || prompt.trim().length === 0) {
+      throw new Error("Cannot generate chat response for empty prompt");
     }
-    return body.response;
+    
+    // First attempt with conservative parameters for JSON generation
+    try {
+      const body = await this.post("/api/generate", {
+        model: this.chatModel,
+        prompt,
+        stream: false,
+        options: {
+          temperature: 0.2,
+          top_p: 0.8,
+          repeat_penalty: 1.1,
+          num_predict: 2000, // Ensure enough tokens for full JSON response
+          stop: [], // Don't use any stop tokens that might truncate JSON
+        }
+      });
+      
+      if (typeof body.response !== "string") {
+        throw new Error("Ollama returned an unexpected response shape for /api/generate.");
+      }
+      
+      if (body.response.trim().length === 0) {
+        throw new Error(`Ollama returned empty response. Model: ${this.chatModel}. This often indicates the model failed to generate content or hit a constraint.`);
+      }
+      
+      return body.response;
+    } catch (err) {
+      // If the first attempt fails with empty response, try with different parameters
+      if (err instanceof Error && err.message.includes("empty response")) {
+        console.warn("First attempt returned empty response, retrying with different parameters...");
+        
+        const retryBody = await this.post("/api/generate", {
+          model: this.chatModel,
+          prompt,
+          stream: false,
+          options: {
+            temperature: 0.3,
+            top_p: 0.9,
+            repeat_penalty: 1.0,
+            num_predict: 3000,
+            num_ctx: 4096, // Increase context window
+          }
+        });
+        
+        if (typeof retryBody.response !== "string" || retryBody.response.trim().length === 0) {
+          throw new Error(`Ollama consistently returns empty responses for model ${this.chatModel}. Check if the model is properly loaded and functioning.`);
+        }
+        
+        return retryBody.response;
+      }
+      
+      throw err;
+    }
   }
 
   async *chatStream(prompt: string): AsyncIterable<string> {
@@ -78,14 +124,29 @@ export class OllamaProvider implements LLMProvider {
   }
 
   async embed(text: string): Promise<number[]> {
+    // Validate input before sending to Ollama
+    if (!text || text.trim().length === 0) {
+      throw new Error("Cannot embed empty text");
+    }
+    
+    if (text.length > 32000) {
+      throw new Error(`Text too long for embedding: ${text.length} characters (limit: 32000)`);
+    }
+
     const body = await this.post("/api/embed", {
       model: this.embedModel,
       input: text,
     });
+    
     const vector = body.embeddings?.[0];
     if (!Array.isArray(vector)) {
       throw new Error("Ollama returned an unexpected response shape for /api/embed.");
     }
+    
+    if (vector.length === 0) {
+      throw new Error("Ollama returned empty embedding vector");
+    }
+    
     return vector;
   }
 
@@ -113,9 +174,29 @@ export class OllamaProvider implements LLMProvider {
           }" and try again.`
         );
       }
+      
+      // Check for common Ollama error patterns
+      if (res.status === 500 && text.includes("out of memory")) {
+        throw new Error(`Ollama ran out of memory. Try using a smaller model or reduce the input size.`);
+      }
+      
+      if (res.status === 400 && text.includes("invalid")) {
+        throw new Error(`Invalid request to Ollama. This may indicate a problem with the model or parameters.`);
+      }
+      
       throw new Error(`Ollama request to ${path} failed (${res.status}): ${text || res.statusText}`);
     }
 
-    return res.json();
+    const result = await res.json();
+    
+    // Additional validation for generate endpoint
+    if (path.includes("/api/generate") && result && typeof result.response === "string") {
+      // Check if the model indicates it's done but with empty content
+      if (result.done === true && result.response.trim().length === 0) {
+        throw new Error(`Model ${this.chatModel} completed but generated no content. This may indicate the prompt was too restrictive or the model encountered an issue.`);
+      }
+    }
+    
+    return result;
   }
 }

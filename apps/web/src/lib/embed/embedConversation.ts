@@ -32,6 +32,7 @@ export async function embedConversation(
   const chunkResults = chunkMessages(conversation.messages.map((m) => ({ id: m.id, content: m.content })));
 
   let failedCount = 0;
+  const failedChunkOrders: number[] = [];
 
   for (const chunk of chunkResults) {
     const existing = await prisma.chunk.findFirst({
@@ -67,7 +68,13 @@ export async function embedConversation(
 
     await embedAndStoreChunk(chunkRecord.id, conversationId, chunk, provider).catch(() => {
       failedCount++;
+      failedChunkOrders.push(chunk.order);
     });
+  }
+
+  // Log detailed failure info
+  if (failedCount > 0) {
+    console.warn(`Embedding partially failed for conversation ${conversationId}: ${failedCount}/${chunkResults.length} chunks failed (orders: ${failedChunkOrders.join(', ')})`);
   }
 
   return { chunkCount: chunkResults.length, failedCount };
@@ -85,7 +92,21 @@ async function embedAndStoreChunk(
   provider: LLMProvider
 ): Promise<void> {
   try {
+    // Add explicit validation before embedding
+    if (!chunk.text || chunk.text.trim().length === 0) {
+      throw new Error("Chunk text is empty");
+    }
+    
+    if (chunk.tokenEstimate > 8000) {
+      throw new Error(`Chunk too large: ${chunk.tokenEstimate} tokens (limit: 8000)`);
+    }
+
     const vector = await provider.embed(chunk.text);
+
+    // Validate vector dimensions
+    if (!Array.isArray(vector) || vector.length === 0) {
+      throw new Error("Invalid embedding vector returned");
+    }
 
     await upsertChunkVector(provider.embedModel, {
       id: chunkId,
@@ -104,11 +125,14 @@ async function embedAndStoreChunk(
       data: { embeddingStatus: "done", error: null },
     });
   } catch (err) {
+    const errorMessage = err instanceof Error ? err.message : "Unknown embedding error.";
+    console.error(`Embedding failed for chunk ${chunkId}:`, errorMessage);
+    
     await prisma.chunk.update({
       where: { id: chunkId },
       data: {
         embeddingStatus: "failed",
-        error: err instanceof Error ? err.message : "Unknown embedding error.",
+        error: errorMessage,
       },
     });
     throw err;

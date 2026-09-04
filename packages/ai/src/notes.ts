@@ -46,27 +46,35 @@ export function buildTranscript(messages: MessageForPrompt[]): string {
 export function buildNotePrompt(title: string, messages: MessageForPrompt[]): string {
   const transcript = buildTranscript(messages);
 
-  return `You are analyzing a personal conversation log to extract a structured note.
-Only use information present in the conversation below. Do not invent facts,
-opinions, or conclusions that are not actually stated or clearly implied by
-the conversation.
+  return `Extract key information from this conversation and format it as JSON.
 
-Conversation title: "${title}"
+Conversation Title: "${title}"
 
-Conversation:
+Conversation Content:
 ${transcript}
 
-Respond with ONLY a JSON object matching this exact shape, no markdown
-fences, no commentary:
+You must analyze the above conversation and create a structured summary. Focus only on what was actually discussed.
+
+Output the result as a JSON object with this exact structure:
 
 {
-  "title": string or null,   // a better short title, or null if "${title}" is already fine
-  "summary": string,         // 2-4 sentences, grounded only in the conversation above
-  "topics": string[],        // 3-8 short topic labels
-  "keyIdeas": string[],      // notable ideas discussed; empty array if none
-  "decisions": string[],     // decisions made or conclusions reached; empty array if none
-  "openQuestions": string[]  // unresolved questions raised; empty array if none
-}`;
+  "title": null,
+  "summary": "Write 2-4 sentences summarizing the main points of the conversation",
+  "topics": ["topic1", "topic2", "topic3"],
+  "keyIdeas": ["idea1", "idea2"],
+  "decisions": ["decision1", "decision2"],
+  "openQuestions": ["question1", "question2"]
+}
+
+Instructions:
+- title: Only provide a new title if "${title}" needs improvement, otherwise use null
+- summary: Concise summary in 2-4 sentences based only on the conversation content
+- topics: 3-8 topic labels that describe what was discussed
+- keyIdeas: Important insights or concepts mentioned (use empty array [] if none)
+- decisions: Concrete decisions or conclusions reached (use empty array [] if none)
+- openQuestions: Unresolved questions or items for follow-up (use empty array [] if none)
+
+Respond with only the JSON object - no explanations, no markdown formatting, no additional text.`;
 }
 
 export class NotePayloadError extends Error {}
@@ -86,32 +94,42 @@ export function parseNotePayload(rawResponse: string): RawNotePayload {
   let parsed: unknown;
   try {
     parsed = JSON.parse(jsonText);
-  } catch {
+  } catch (jsonError) {
+    // Log the problematic response for debugging
+    console.error("JSON parsing failed. Raw response:", rawResponse);
+    console.error("Extracted JSON text:", jsonText);
     throw new NotePayloadError("Model response was not valid JSON.");
   }
 
   if (typeof parsed !== "object" || parsed === null) {
+    console.error("Parsed response is not an object:", parsed);
     throw new NotePayloadError("Model response was not a JSON object.");
   }
 
   const p = parsed as Record<string, unknown>;
 
   if (typeof p.summary !== "string" || p.summary.trim().length === 0) {
+    console.error("Invalid summary field:", p.summary);
     throw new NotePayloadError("Missing or empty 'summary' field.");
   }
   if (!isStringArray(p.topics)) {
+    console.error("Invalid topics field:", p.topics);
     throw new NotePayloadError("'topics' must be an array of strings.");
   }
   if (!isStringArray(p.keyIdeas)) {
+    console.error("Invalid keyIdeas field:", p.keyIdeas);
     throw new NotePayloadError("'keyIdeas' must be an array of strings.");
   }
   if (!isStringArray(p.decisions)) {
+    console.error("Invalid decisions field:", p.decisions);
     throw new NotePayloadError("'decisions' must be an array of strings.");
   }
   if (!isStringArray(p.openQuestions)) {
+    console.error("Invalid openQuestions field:", p.openQuestions);
     throw new NotePayloadError("'openQuestions' must be an array of strings.");
   }
   if (p.title !== null && typeof p.title !== "string") {
+    console.error("Invalid title field:", p.title);
     throw new NotePayloadError("'title' must be a string or null.");
   }
 
@@ -136,10 +154,63 @@ function isStringArray(value: unknown): value is string[] {
  */
 function extractJsonObject(text: string): string {
   const trimmed = text.trim();
-  if (trimmed.startsWith("{") && trimmed.endsWith("}")) return trimmed;
+  
+  if (!trimmed) {
+    throw new Error("Response is completely empty");
+  }
+  
+  // Handle common markdown fence patterns
+  const fencedPatterns = [
+    /^```json\s*\n([\s\S]*?)\n\s*```$/,
+    /^```\s*\n([\s\S]*?)\n\s*```$/,
+    /^`([^`]*)`$/
+  ];
+  
+  for (const pattern of fencedPatterns) {
+    const match = trimmed.match(pattern);
+    if (match && match[1]) {
+      const content = match[1].trim();
+      if (content.startsWith("{") && content.includes("}")) {
+        return content;
+      }
+    }
+  }
+  
+  // If already clean JSON, return as-is
+  if (trimmed.startsWith("{") && trimmed.endsWith("}")) {
+    return trimmed;
+  }
 
-  const match = trimmed.match(/\{[\s\S]*\}/);
-  if (match) return match[0];
+  // Extract JSON object with better boundary detection
+  // This handles nested objects and arrays properly
+  let braceCount = 0;
+  let startIndex = -1;
+  let endIndex = -1;
+  
+  for (let i = 0; i < trimmed.length; i++) {
+    const char = trimmed[i];
+    if (char === '{') {
+      if (startIndex === -1) startIndex = i;
+      braceCount++;
+    } else if (char === '}') {
+      braceCount--;
+      if (braceCount === 0 && startIndex !== -1) {
+        endIndex = i;
+        break;
+      }
+    }
+  }
+  
+  if (startIndex !== -1 && endIndex !== -1) {
+    return trimmed.substring(startIndex, endIndex + 1);
+  }
 
+  // Handle cases where there's text before/after the JSON (fallback)
+  const boundaryMatch = trimmed.match(/.*?(\{[\s\S]*\}).*/);
+  if (boundaryMatch && boundaryMatch[1]) {
+    return boundaryMatch[1];
+  }
+
+  // Last resort: return the trimmed text and let JSON.parse fail with a better error
   return trimmed;
 }

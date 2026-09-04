@@ -128,8 +128,19 @@ async function runEmbeddingPhase(conversationIds: string[]): Promise<void> {
   });
 
   if (failedChunks > 0 || providerErrors.length > 0) {
-    toast.warning("Some chunks failed to embed", {
-      description: providerErrors[0] ?? `${failedChunks} chunk(s) failed. Retry from the conversation detail page.`,
+    const errorMsg = providerErrors.length > 0 
+      ? providerErrors[0] 
+      : `${failedChunks} chunk(s) failed to embed. Check the conversation details and retry individual chunks.`;
+    
+    toast.warning("Embedding partially failed", {
+      description: errorMsg,
+      action: failedChunks > 0 ? {
+        label: "View Details",
+        onClick: () => {
+          // Log details to console for debugging
+          console.warn(`Embedding failures: ${failedChunks} chunks failed across ${conversationIds.length} conversations`);
+        },
+      } : undefined,
     });
   }
 }
@@ -166,9 +177,18 @@ async function runNotesPhase(conversationIds: string[]): Promise<void> {
   });
 
   if (failedNotes > 0 || providerErrors.length > 0) {
-    toast.warning("Some notes failed to generate", {
-      description:
-        providerErrors[0] ?? `${failedNotes} note(s) failed. Use "Generate missing notes" on Conversations.`,
+    const errorMsg = providerErrors.length > 0
+      ? providerErrors[0]
+      : `${failedNotes} note(s) failed to generate. This usually happens with invalid JSON responses.`;
+      
+    toast.warning("Note generation partially failed", {
+      description: errorMsg,
+      action: failedNotes > 0 ? {
+        label: "Retry Individual",
+        onClick: () => {
+          console.warn(`Note generation failures: ${failedNotes} notes failed across ${conversationIds.length} conversations`);
+        },
+      } : undefined,
     });
   }
 }
