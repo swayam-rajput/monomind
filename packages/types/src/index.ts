@@ -114,3 +114,10 @@ export interface ImportSummary {
   /** Ids of the conversations that were successfully created, for convenience. */
   importedConversationIds: string[];
 }
+
+/** Response from the import API when analyzing a ChatGPT export for selection. */
+export interface ImportPreviewResponse {
+  type: "preview";
+  conversations: ParsedConversation[];
+  skipped: ImportWarning[];
+}

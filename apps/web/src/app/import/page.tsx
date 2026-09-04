@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
+import { ChatSelectionDialog } from "@/components/ChatSelectionDialog";
 import {
   getImportJobState,
   subscribeImportJob,
@@ -13,6 +14,7 @@ import {
   isImportJobRunning,
   type ImportJobState,
 } from "@/lib/importJobStore";
+import type { ParsedConversation, ImportPreviewResponse, ImportSummary } from "@monome/types";
 
 export default function ImportPage() {
   // Subscribes to the module-level job store (see importJobStore.ts)
@@ -22,11 +24,16 @@ export default function ImportPage() {
   // showing whatever progress the store already has.
   const [job, setJob] = useState<ImportJobState>(getImportJobState());
   const [pastedText, setPastedText] = useState("");
+  const [showDialog, setShowDialog] = useState(false);
+  const [parsedConversations, setParsedConversations] = useState<ParsedConversation[]>([]);
+  const [skippedConversations, setSkippedConversations] = useState<{ identifier: string; reason: string }[]>([]);
+  const [isImporting, setIsImporting] = useState(false);
+  const [isProcessingFile, setIsProcessingFile] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => subscribeImportJob(setJob), []);
 
-  const running = isImportJobRunning();
+  // const running = isImportJobRunning();
 
   async function handleFileSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -36,10 +43,72 @@ export default function ImportPage() {
       return;
     }
 
+    setIsProcessingFile(true);
+
     const formData = new FormData();
     formData.append("file", file);
 
-    await runImportJob(() => fetch("/api/import", { method: "POST", body: formData }));
+    try {
+      const response = await fetch("/api/import", { method: "POST", body: formData });
+      const result: ImportPreviewResponse | ImportSummary = await response.json();
+
+      if (!response.ok) {
+        toast.error("Import failed", { description: (result as any).error });
+        return;
+      }
+
+      if ("type" in result && result.type === "preview") {
+        // Show dialog with conversations to select
+        setParsedConversations(result.conversations);
+        setSkippedConversations(result.skipped || []);
+        setShowDialog(true);
+      } else {
+        // Direct import (shouldn't happen with new flow, but keeping for safety)
+        toast.success("Import completed");
+      }
+    } catch (err) {
+      toast.error("Import failed", { 
+        description: err instanceof Error ? err.message : "Unknown error" 
+      });
+    } finally {
+      setIsProcessingFile(false);
+    }
+  }
+
+  async function handleSelectedImport(selectedConversations: ParsedConversation[]) {
+    setIsImporting(true);
+    
+    await runImportJob(() =>
+      fetch("/api/import", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ 
+          selectedConversations, 
+          skipped: skippedConversations 
+        }),
+      })
+    );
+
+    setIsImporting(false);
+    setShowDialog(false);
+    setParsedConversations([]);
+    setSkippedConversations([]);
+    
+    // Clear the file input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  }
+
+  function handleDialogClose() {
+    setShowDialog(false);
+    setParsedConversations([]);
+    setSkippedConversations([]);
+    
+    // Clear the file input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
   }
 
   async function handlePasteSubmit(e: React.FormEvent) {
@@ -59,6 +128,8 @@ export default function ImportPage() {
   }
 
   const { phase, error, summary, embedProgress, notesProgress } = job;
+  const running = isImportJobRunning();
+  const isAnyProcessRunning = running || isProcessingFile;
 
   return (
     <main className="mx-auto flex max-w-3xl flex-col gap-10 p-8">
@@ -69,6 +140,14 @@ export default function ImportPage() {
           running in the background even if you navigate to another page.
         </p>
       </div>
+
+      <ChatSelectionDialog
+        conversations={parsedConversations}
+        isOpen={showDialog}
+        onClose={handleDialogClose}
+        onImport={handleSelectedImport}
+        isImporting={isImporting}
+      />
 
       {/* ── Phase step indicator (shown while running or done) ─────── */}
       {phase !== "idle" && phase !== "error" && (
@@ -112,13 +191,26 @@ export default function ImportPage() {
           Upload the .zip file you get from ChatGPT Settings &rarr; Data controls &rarr; Export data. We look for
           conversations.json inside it.
         </p>
-        <Input ref={fileInputRef} type="file" accept=".zip" />
-        <Button type="submit" disabled={running} className="w-fit">
-          {phase === "importing" ? "Importing..." : "Import export"}
+        
+        {isProcessingFile && (
+          <div className="rounded-md bg-muted/50 p-3 text-sm">
+            <div className="flex items-center gap-2">
+              <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent"></div>
+              <span>Processing ChatGPT export file...</span>
+            </div>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Parsing conversations from the export. This may take a moment for large files.
+            </p>
+          </div>
+        )}
+        
+        <Input ref={fileInputRef} type="file" accept=".zip" disabled={isProcessingFile} />
+        <Button type="submit" disabled={isAnyProcessRunning} className="w-fit">
+          {isProcessingFile ? "Processing export..." : phase === "importing" ? "Importing..." : "Import export"}
         </Button>
       </form>
 
-      <form onSubmit={handlePasteSubmit} className="flex flex-col gap-3 rounded-lg border border-border bg-card p-6">
+      {/* <form onSubmit={handlePasteSubmit} className="flex flex-col gap-3 rounded-lg border border-border bg-card p-6">
         <h2 className="font-medium">Paste a single conversation (for quick testing)</h2>
         <p className="text-sm text-muted-foreground">
           Paste either{" "}
@@ -132,10 +224,10 @@ export default function ImportPage() {
           placeholder='{"title": "Test chat", "messages": [{"role": "user", "content": "Hello"}, {"role": "assistant", "content": "Hi there"}]}'
           className="font-mono text-xs"
         />
-        <Button type="submit" disabled={running} className="w-fit">
+        <Button type="submit" disabled={isAnyProcessRunning} className="w-fit">
           {phase === "importing" ? "Importing..." : "Import pasted conversation"}
         </Button>
-      </form>
+      </form> */}
 
       {phase === "embedding" && embedProgress && (
         <div className="rounded-lg border border-border bg-card p-6">

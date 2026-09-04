@@ -3,6 +3,7 @@ import { prisma } from "@monome/db";
 import { BackfillNotesButton } from "@/components/BackfillNotesButton";
 import { GenerateNoteButton } from "@/app/conversations/[id]/GenerateNoteButton";
 import { DeleteConversationButton } from "@/app/conversations/[id]/DeleteConversationButton";
+import { ClientReEmbedButton } from "@/components/ClientReEmbedButton";
 import { DeleteAllButton } from "./DeleteAllButton";
 
 // Server component: reads directly from SQLite via Prisma at request time.
@@ -14,6 +15,11 @@ export default async function ConversationsPage() {
     include: {
       _count: { select: { messages: true } },
       notes: true,
+      chunks: {
+        select: {
+          embeddingStatus: true,
+        },
+      },
     },
   });
 
@@ -43,6 +49,17 @@ export default async function ConversationsPage() {
           {conversations.map((c) => {
             const note = c.notes[0] ?? null;
             const topics: string[] = note ? JSON.parse(note.topics) : [];
+            
+            // Calculate embedding status
+            const totalChunks = c.chunks.length;
+            const doneChunks = c.chunks.filter(chunk => chunk.embeddingStatus === "done").length;
+            const failedChunks = c.chunks.filter(chunk => chunk.embeddingStatus === "failed").length;
+            const pendingChunks = c.chunks.filter(chunk => chunk.embeddingStatus === "pending").length;
+            
+            const isFullyEmbedded = totalChunks > 0 && doneChunks === totalChunks;
+            const hasEmbeddingIssues = failedChunks > 0;
+            const isPartiallyEmbedded = doneChunks > 0 && doneChunks < totalChunks;
+            const hasNoEmbedding = totalChunks === 0 || doneChunks === 0;
 
             return (
               <li key={c.id} className="p-4 hover:bg-muted/30">
@@ -56,6 +73,28 @@ export default async function ConversationsPage() {
                   <p className="mt-0.5 text-xs text-muted-foreground">
                     {c.source} &middot; {c.createdAt.toLocaleString()}
                   </p>
+
+                  {/* Embedding status indicator */}
+                  <div className="mt-1 flex items-center gap-2">
+                    <div className="flex items-center gap-1 text-xs">
+                      <span className="text-muted-foreground">Embedding:</span>
+                      {hasNoEmbedding ? (
+                        <span className="text-yellow-600">Not embedded</span>
+                      ) : isFullyEmbedded ? (
+                        <span className="text-green-600">✓ Complete</span>
+                      ) : hasEmbeddingIssues ? (
+                        <span className="text-destructive">
+                          {doneChunks}/{totalChunks} ({failedChunks} failed)
+                        </span>
+                      ) : isPartiallyEmbedded ? (
+                        <span className="text-yellow-600">
+                          {doneChunks}/{totalChunks} done
+                        </span>
+                      ) : (
+                        <span className="text-muted-foreground">{pendingChunks} pending</span>
+                      )}
+                    </div>
+                  </div>
 
                   {note ? (
                     <>
@@ -75,17 +114,20 @@ export default async function ConversationsPage() {
                   )}
                 </Link>
 
-                {!note && (
-                  <div className="mt-2 flex items-center gap-2">
-                    <GenerateNoteButton conversationId={c.id} stopPropagation />
-                    <DeleteConversationButton conversationId={c.id} stopPropagation size="sm" />
-                  </div>
-                )}
-                {note && (
-                  <div className="mt-2">
-                    <DeleteConversationButton conversationId={c.id} stopPropagation size="sm" />
-                  </div>
-                )}
+                <div className="mt-2 flex items-center gap-2">
+                  {!note && <GenerateNoteButton conversationId={c.id} stopPropagation />}
+                  
+                  {(hasNoEmbedding || hasEmbeddingIssues || isPartiallyEmbedded) && (
+                    <ClientReEmbedButton 
+                      conversationId={c.id} 
+                      size="sm"
+                      variant="outline"
+                      stopPropagation 
+                    />
+                  )}
+                  
+                  <DeleteConversationButton conversationId={c.id} stopPropagation size="sm" />
+                </div>
               </li>
             );
           })}
