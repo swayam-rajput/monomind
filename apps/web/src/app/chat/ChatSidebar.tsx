@@ -22,7 +22,6 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { toast } from "sonner";
-import { groupByRecency } from "@/lib/relativeTime";
 
 interface SessionSummary {
   id: string;
@@ -79,8 +78,7 @@ export function ChatSidebar({
       )
     : sessions;
 
-  const groups = groupByRecency(filtered, (s) => s.lastActivityAt);
-
+  const groups =  [["Chats", filtered] as const];
   return (
     <>
       <Sidebar
@@ -157,7 +155,8 @@ export function ChatSidebar({
         </SidebarHeader>
 
         {/* Chat Session Groups */}
-        <SidebarContent className="overflow-visible px-2 pt-1 pb-4">
+        <hr />
+        <SidebarContent className="overflow-visible px-2 pt-1 ">
           {filtered.length === 0 && (
             <p className="px-3 py-4 text-center text-xs text-sidebar-foreground/35">
               {search ? "No threads found." : "No chats yet."}

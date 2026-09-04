@@ -81,7 +81,7 @@ export default async function ConversationsPage() {
                       {hasNoEmbedding ? (
                         <span className="text-yellow-600">Not embedded</span>
                       ) : isFullyEmbedded ? (
-                        <span className="text-green-600">✓ Complete</span>
+                        <span className="text-green-600"> Complete</span>
                       ) : hasEmbeddingIssues ? (
                         <span className="text-destructive">
                           {doneChunks}/{totalChunks} ({failedChunks} failed)
