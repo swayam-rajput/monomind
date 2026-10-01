@@ -5,7 +5,7 @@ import Link from "next/link";
 import type { SearchApiResult } from "@/app/api/search/route";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { toast } from "sonner";
+import { toast } from "@/components/ui/toast";
 
 type Status = "idle" | "checking" | "empty-db" | "searching" | "done" | "error";
 

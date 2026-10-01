@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { toast } from "sonner";
+import { toast } from "@/components/ui/toast";
 
 export function RetryFailedChunksButton({ conversationId }: { conversationId: string }) {
   const [retrying, setRetrying] = useState(false);
@@ -13,6 +13,7 @@ export function RetryFailedChunksButton({ conversationId }: { conversationId: st
     setRetrying(true);
     const toastId = toast.loading("Retrying failed chunks…", {
       description: "This runs in the background — you can navigate away.",
+      duration: Infinity,
     });
 
     try {

@@ -6,7 +6,11 @@ import { GenerateNoteButton } from "./GenerateNoteButton";
 import { DeleteConversationButton } from "./DeleteConversationButton";
 import { MessagesSection } from "./MessagesSection";
 
-export default async function ConversationDetailPage({ params }: { params: { id: string } }) {
+export default async function ConversationDetailPage({
+  params,
+}: {
+  params: { id: string };
+}) {
   const conversation = await prisma.conversation.findUnique({
     where: { id: params.id },
     include: {
@@ -19,139 +23,232 @@ export default async function ConversationDetailPage({ params }: { params: { id:
   if (!conversation) notFound();
 
   const note = conversation.notes[0] ?? null;
+
   const topics: string[] = note ? JSON.parse(note.topics) : [];
   const keyIdeas: string[] = note ? JSON.parse(note.keyIdeas) : [];
   const decisions: string[] = note ? JSON.parse(note.decisions) : [];
   const openQuestions: string[] = note ? JSON.parse(note.openQuestions) : [];
 
-  const failedCount = conversation.chunks.filter((c) => c.embeddingStatus === "failed").length;
-  const doneCount = conversation.chunks.filter((c) => c.embeddingStatus === "done").length;
+  const totalChunks = conversation.chunks.length;
+  const doneCount = conversation.chunks.filter(
+    (chunk) => chunk.embeddingStatus === "done",
+  ).length;
+  const failedCount = conversation.chunks.filter(
+    (chunk) => chunk.embeddingStatus === "failed",
+  ).length;
+
+  const isFullyEmbedded = totalChunks > 0 && doneCount === totalChunks;
+  const isPartiallyEmbedded = doneCount > 0 && doneCount < totalChunks;
 
   return (
-    <main className="mx-auto flex max-w-3xl flex-col gap-6 p-8">
-      <Link href="/conversations" className="text-sm text-muted-foreground underline">
-        &larr; All conversations
+    <main className="mx-auto flex max-w-4xl flex-col gap-8 px-6 py-8">
+      {/* Back */}
+      <Link
+        href="/conversations"
+        className="w-fit text-sm text-muted-foreground transition-colors hover:text-foreground"
+      >
+        ← All conversations
       </Link>
 
-      <div>
-        <h1 className="text-2xl font-bold">{conversation.title}</h1>
-        <p className="text-sm text-muted-foreground">
-          {conversation.source} &middot; {conversation.createdAt.toLocaleString()} &middot; {conversation.messages.length}{" "}
-          messages
-        </p>
-      </div>
+      {/* Header */}
+      <header className="space-y-3">
+        <div className="flex justify-between">
 
-      <section className="rounded-lg border border-border bg-card p-6">
-        <h2 className="font-medium">Note</h2>
+          <h1 className="text-xl font-semibold tracking-tight">
+            {conversation.title}
+          </h1>
+          <p title="Permanently delete this conversation, its messages, note, and embedding records.">
+              <DeleteConversationButton
+                  conversationId={conversation.id}
+                  redirectAfter
+                />
+            </p>
+
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="rounded-md bg-muted px-2 py-1 text-xs font-medium">
+            {conversation.source}
+          </span>
+
+          <span className="text-xs text-muted-foreground">
+            {conversation.messages.length}{" "}
+            {conversation.messages.length === 1 ? "message" : "messages"}
+          </span>
+
+          <span className="text-xs text-muted-foreground">
+            ·
+          </span>
+
+          <span className="text-xs text-muted-foreground">
+            {conversation.createdAt.toLocaleString()}
+          </span>
+        </div>
+
+      </header>
+
+      {/* Note */}
+      <section className="rounded-xl border border-border bg-card">
+        <div className="border-b border-border px-6 py-4">
+          <h2 className="font-semibold">Note</h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            A structured summary generated from this conversation.
+          </p>
+        </div>
+
         {note ? (
-          <div className="mt-2 flex flex-col gap-3 text-sm">
+          <div className="space-y-6 px-6 py-5">
             {note.titleOverride && (
-              <p>
-                <span className="font-medium">Suggested title:</span> {note.titleOverride}
-              </p>
+              <div>
+                <p className="mb-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                  Suggested title
+                </p>
+                <p className="text-sm font-medium">{note.titleOverride}</p>
+              </div>
             )}
-            <p>{note.summary}</p>
+
+            <p className="text-sm leading-6 text-foreground/90">
+              {note.summary}
+            </p>
 
             {topics.length > 0 && (
-              <div className="flex flex-wrap gap-1">
-                {topics.map((t, i) => (
-                  <span key={i} className="rounded-full bg-muted px-2 py-0.5 text-xs">
-                    {t}
+              <div className="flex flex-wrap gap-2">
+                {topics.map((topic, index) => (
+                  <span
+                    key={index}
+                    className="rounded-full border border-border bg-muted px-2.5 py-1 text-xs text-muted-foreground"
+                  >
+                    {topic}
                   </span>
                 ))}
               </div>
             )}
 
-            {keyIdeas.length > 0 && (
-              <div>
-                <p className="text-xs font-medium uppercase text-muted-foreground">Key ideas</p>
-                <ul className="mt-1 list-inside list-disc">
-                  {keyIdeas.map((idea, i) => (
-                    <li key={i}>{idea}</li>
-                  ))}
-                </ul>
-              </div>
-            )}
+            <div className="grid gap-6 sm:grid-cols-2">
+              {keyIdeas.length > 0 && (
+                <NoteList title="Key ideas" items={keyIdeas} />
+              )}
 
-            {decisions.length > 0 && (
-              <div>
-                <p className="text-xs font-medium uppercase text-muted-foreground">Decisions</p>
-                <ul className="mt-1 list-inside list-disc">
-                  {decisions.map((d, i) => (
-                    <li key={i}>{d}</li>
-                  ))}
-                </ul>
-              </div>
-            )}
+              {decisions.length > 0 && (
+                <NoteList title="Decisions" items={decisions} />
+              )}
 
-            {openQuestions.length > 0 && (
-              <div>
-                <p className="text-xs font-medium uppercase text-muted-foreground">Open questions</p>
-                <ul className="mt-1 list-inside list-disc">
-                  {openQuestions.map((q, i) => (
-                    <li key={i}>{q}</li>
-                  ))}
-                </ul>
-              </div>
-            )}
+              {openQuestions.length > 0 && (
+                <NoteList title="Open questions" items={openQuestions} />
+              )}
+            </div>
           </div>
         ) : (
-          <div className="mt-2 flex flex-col gap-3 text-sm">
-            <p className="text-muted-foreground">No note generated yet.</p>
+          <div className="flex items-center justify-between gap-6 px-6 py-5">
+            <div>
+              <p className="text-sm font-medium">No note generated yet.</p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Generate a structured summary from this conversation.
+              </p>
+            </div>
+
             <GenerateNoteButton conversationId={conversation.id} />
           </div>
         )}
       </section>
 
-      <section className="rounded-lg border border-border bg-card p-6">
-        <h2 className="font-medium">Embedding status</h2>
-        <p className="mt-1 text-sm text-muted-foreground">
-          {conversation.chunks.length} chunk{conversation.chunks.length === 1 ? "" : "s"} &middot; {doneCount} done
-          {failedCount > 0 && ` · ${failedCount} failed`}
-        </p>
+      {/* Embedding status */}
+      <section className="rounded-xl border border-border bg-card">
+        <div className="flex items-center justify-between gap-4 px-6 py-4">
+          <div>
+            <h2 className="font-semibold">Embedding status</h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {totalChunks} {totalChunks === 1 ? "chunk" : "chunks"} processed
+            </p>
+          </div>
 
-        {failedCount > 0 && <RetryFailedChunksButton conversationId={conversation.id} />}
+          {isFullyEmbedded && (
+            <span className="rounded-full bg-emerald-500/10 px-2.5 py-1 text-xs font-medium text-emerald-600 dark:text-emerald-400">
+              Complete
+            </span>
+          )}
 
-        {conversation.chunks.length > 0 && (
-          <ul className="mt-4 flex flex-col gap-2 text-xs">
-            {conversation.chunks.map((chunk) => (
-              <li key={chunk.id} className="rounded-md border border-border p-2">
-                <div className="flex items-center justify-between">
-                  <span className="font-mono">
-                    chunk #{chunk.order} &middot; ~{chunk.tokenEstimate} tokens
-                  </span>
-                  <span
-                    className={
-                      chunk.embeddingStatus === "done"
-                        ? "text-green-600"
-                        : chunk.embeddingStatus === "failed"
-                          ? "text-destructive"
-                          : "text-muted-foreground"
-                    }
-                  >
-                    {chunk.embeddingStatus}
-                  </span>
-                </div>
-                {chunk.error && <p className="mt-1 text-destructive">{chunk.error}</p>}
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
+          {isPartiallyEmbedded && failedCount === 0 && (
+            <span className="rounded-full bg-amber-500/10 px-2.5 py-1 text-xs font-medium text-amber-600 dark:text-amber-400">
+              Processing
+            </span>
+          )}
 
-      <MessagesSection messages={conversation.messages} />
+          {failedCount > 0 && (
+            <span className="rounded-full bg-destructive/10 px-2.5 py-1 text-xs font-medium text-destructive">
+              {failedCount} failed
+            </span>
+          )}
+        </div>
 
-      {/* Danger zone */}
-      <section className="rounded-lg border border-destructive/30 p-4">
-        <h2 className="text-sm font-medium text-destructive">Danger zone</h2>
-        <p className="mt-1 text-xs text-muted-foreground">
-          Permanently removes this conversation, its messages, generated note, and embedding records.
-          This cannot be undone.
-        </p>
-        <div className="mt-3">
-          <DeleteConversationButton conversationId={conversation.id} redirectAfter />
+        <div className="border-t border-border px-6 py-4">
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-muted-foreground">
+              {doneCount} of {totalChunks} chunks embedded
+            </span>
+
+            {totalChunks > 0 && (
+              <span className="font-medium">
+                {Math.round((doneCount / totalChunks) * 100)}%
+              </span>
+            )}
+          </div>
+
+          <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-muted">
+            <div
+              className="h-full rounded-full bg-foreground transition-all"
+              style={{
+                width:
+                  totalChunks > 0
+                    ? `${(doneCount / totalChunks) * 100}%`
+                    : "0%",
+              }}
+            />
+          </div>
+
+          {failedCount > 0 && (
+            <div className="mt-4">
+              <RetryFailedChunksButton
+                conversationId={conversation.id}
+              />
+            </div>
+          )}
         </div>
       </section>
+
+
+      {/* Messages */}
+      <section>
+        <MessagesSection messages={conversation.messages} />
+      </section>
+
     </main>
+  );
+}
+
+function NoteList({
+  title,
+  items,
+}: {
+  title: string;
+  items: string[];
+}) {
+  return (
+    <div>
+      <h3 className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+        {title}
+      </h3>
+
+      <ul className="mt-2 space-y-2">
+        {items.map((item, index) => (
+          <li
+            key={index}
+            className="relative pl-4 text-sm leading-5 text-foreground/90"
+          >
+            <span className="absolute left-0 top-2 size-1.5 rounded-full bg-muted-foreground" />
+            {item}
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 }

@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
-import { toast } from "sonner";
+import { toast } from "@/components/ui/toast";
 
 interface NoteData {
   id: string;
@@ -79,6 +79,7 @@ export function NoteEditor({ note }: { note: NoteData }) {
     setRegenRunning(true);
     const toastId = toast.loading("Regenerating note…", {
       description: "This runs in the background — you can navigate away.",
+      duration: Infinity,
     });
 
     try {

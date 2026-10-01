@@ -1,6 +1,6 @@
 "use client";
 
-import { toast } from "sonner";
+import { toast } from "@/components/ui/toast";
 
 /**
  * Module-level (not React-state) store for the active import pipeline
@@ -65,21 +65,30 @@ export function isImportJobRunning(): boolean {
 export async function runImportJob(request: () => Promise<Response>): Promise<void> {
   setState({ ...initialState, phase: "importing" });
 
+  // One persistent toast for the whole pipeline (import -> embed -> notes).
+  // It is created with duration: Infinity so it never auto-dismisses, and
+  // every phase update reuses the same id so the toast stays on screen
+  // with live "x / n" counts until the job finishes or fails.
+  const toastId = toast.loading("Importing…", {
+    description: "Uploading and parsing conversations…",
+    duration: Infinity,
+  });
+
   try {
     const res = await request();
     const body = await res.json();
 
     if (!res.ok) {
       setState({ phase: "error", error: body.error ?? "Import failed." });
-      toast.error("Import failed", { description: body.error ?? "Import failed." });
+      toast.error("Import failed", { id: toastId, description: body.error ?? "Import failed." });
       return;
     }
 
     setState({ summary: body });
 
     if (body.importedConversationIds.length > 0) {
-      await runEmbeddingPhase(body.importedConversationIds);
-      await runNotesPhase(body.importedConversationIds);
+      await runEmbeddingPhase(body.importedConversationIds, toastId);
+      await runNotesPhase(body.importedConversationIds, toastId);
     }
 
     setState({ phase: "done" });
@@ -87,22 +96,39 @@ export async function runImportJob(request: () => Promise<Response>): Promise<vo
       ? ` · ${body.duplicateCount} duplicate${body.duplicateCount === 1 ? "" : "s"} skipped`
       : "";
     toast.success(`Imported ${body.importedCount} conversation${body.importedCount === 1 ? "" : "s"}${dupMsg}`, {
+      id: toastId,
       description: "Embedding and note generation finished.",
+      duration: 5000,
     });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Import failed.";
     setState({ phase: "error", error: message });
-    toast.error("Import failed", { description: message });
+    toast.error("Import failed", { id: toastId, description: message });
   }
 }
 
-async function runEmbeddingPhase(conversationIds: string[]): Promise<void> {
+async function runEmbeddingPhase(conversationIds: string[], toastId: string | number): Promise<void> {
   setState({ phase: "embedding" });
+  const total = conversationIds.length;
   const providerErrors: string[] = [];
   let failedChunks = 0;
 
+  toast.loading(`Embedding conversations (0 / ${total})…`, {
+    id: toastId,
+    description: "Chunking and embedding each conversation…",
+    duration: Infinity,
+  });
+
   for (let i = 0; i < conversationIds.length; i++) {
-    setState({ embedProgress: { current: i + 1, total: conversationIds.length, failedChunks, providerErrors } });
+    setState({ embedProgress: { current: i + 1, total, failedChunks, providerErrors } });
+    toast.loading(`Embedding conversations (${i + 1} / ${total})…`, {
+      id: toastId,
+      description:
+        failedChunks > 0
+          ? `${failedChunks} chunk${failedChunks === 1 ? "" : "s"} failed so far — continuing…`
+          : "Chunking and embedding each conversation…",
+      duration: Infinity,
+    });
 
     try {
       const res = await fetch("/api/embed", {
@@ -132,6 +158,7 @@ async function runEmbeddingPhase(conversationIds: string[]): Promise<void> {
       ? providerErrors[0] 
       : `${failedChunks} chunk(s) failed to embed. Check the conversation details and retry individual chunks.`;
     
+    // Separate toast (new id) so the persistent pipeline toast keeps living.
     toast.warning("Embedding partially failed", {
       description: errorMsg,
       action: failedChunks > 0 ? {
@@ -145,13 +172,28 @@ async function runEmbeddingPhase(conversationIds: string[]): Promise<void> {
   }
 }
 
-async function runNotesPhase(conversationIds: string[]): Promise<void> {
+async function runNotesPhase(conversationIds: string[], toastId: string | number): Promise<void> {
   setState({ phase: "generating-notes" });
+  const total = conversationIds.length;
   const providerErrors: string[] = [];
   let failedNotes = 0;
 
+  toast.loading(`Generating notes (0 / ${total})…`, {
+    id: toastId,
+    description: "Summarizing each conversation…",
+    duration: Infinity,
+  });
+
   for (let i = 0; i < conversationIds.length; i++) {
-    setState({ notesProgress: { current: i + 1, total: conversationIds.length, failedNotes, providerErrors } });
+    setState({ notesProgress: { current: i + 1, total, failedNotes, providerErrors } });
+    toast.loading(`Generating notes (${i + 1} / ${total})…`, {
+      id: toastId,
+      description:
+        failedNotes > 0
+          ? `${failedNotes} note${failedNotes === 1 ? "" : "s"} failed so far — continuing…`
+          : "Summarizing each conversation…",
+      duration: Infinity,
+    });
 
     try {
       const res = await fetch("/api/notes/generate", {

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { toast } from "sonner";
+import { toast } from "@/components/ui/toast";
 
 export function DeleteAllButton({ count }: { count: number }) {
   const [deleting, setDeleting] = useState(false);

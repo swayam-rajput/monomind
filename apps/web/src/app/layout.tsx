@@ -3,7 +3,7 @@ import { DM_Sans, Lato } from "next/font/google";
 import "./globals.css";
 import { NavBar } from "@/components/NavBar";
 import { cn } from "@/lib/utils";
-import { Toaster } from "@/components/ui/sonner";
+import { Toaster } from "@/components/ui/toast";
 import { ThemeProvider } from "@/components/ui/theme-provider"
 
 // Loaded from local files (not next/font/google) so the app never needs a
@@ -38,7 +38,7 @@ export default function RootLayout({
               below it; overflow-auto lets scrollable pages work normally while
               fixed-height children (like /chat) use h-full against this. */}
           <main className="min-h-[calc(100dvh-2.5rem)] pt-10">{children}</main>
-          <Toaster position="bottom-right" />
+          <Toaster />
 
         </ThemeProvider>
       </body>

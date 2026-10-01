@@ -21,7 +21,7 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
-import { toast } from "sonner";
+import { toast } from "@/components/ui/toast";
 
 interface SessionSummary {
   id: string;

@@ -1,6 +1,6 @@
 "use client";
 
-import { toast } from "sonner";
+import { toast } from "@/components/ui/toast";
 
 /**
  * Module-level store for chat sessions and in-flight streaming, mirroring

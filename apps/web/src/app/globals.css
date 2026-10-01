@@ -42,7 +42,7 @@
 
     /* Destructive */
     --destructive: 0 72% 51%;
-    --destructive-foreground: 0 0% 98%;
+    --destructive-foreground: var(--color-red-700);
 
     /* Borders & inputs */
     --border: 0 0% 88%;
@@ -69,6 +69,14 @@
     /* ── Fonts ─────────────────────────────────────────────────────────── */
     --font-dm: 'DM Sans';
     --font-geist-mono: 'Geist Mono';
+    --info: #3b82f6;
+    --info-foreground: #1d4ed8;
+
+    --success: #10b981;
+    --success-foreground: #047857;
+
+    --warning: #f59e0b;
+    --warning-foreground: #b45309;
   }
 
   .dark {
@@ -93,7 +101,7 @@
     --accent-foreground: 0 0% 95%;
 
     --destructive: 0 62% 42%;
-    --destructive-foreground: 0 0% 98%;
+    --destructive-foreground: var(--color-red-400);
 
     --border: 0 0% 20%;
     --input: 0 0% 15%;
@@ -109,6 +117,14 @@
     --sidebar-accent-foreground: 0 0% 90%;
     --sidebar-border: 0 0% 20%;
     --sidebar-ring: 0 0% 80%;
+    --info: #3b82f6;
+    --info-foreground: #1d4ed8;
+
+    --success: #10b981;
+    --success-foreground: #047857;
+
+    --warning: #f59e0b;
+    --warning-foreground: #b45309;
   }
 }
 

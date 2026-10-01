@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useId, useState } from "react";
 
 interface Message {
   id: string;
@@ -10,77 +10,95 @@ interface Message {
 
 interface Props {
   messages: Message[];
-  /** How many messages to show before collapsing the rest. */
+  /** Number of messages visible before collapsing the rest. */
   previewCount?: number;
 }
 
-/**
- * Renders the message timeline for a conversation with a collapsible
- * "Show all N messages" toggle. The first `previewCount` messages are
- * always visible; the rest are revealed on demand.
- *
- * Uses a plain JS open/close state rather than the Base UI collapsible
- * (which relies on a Tailwind v4-only CSS variable utility). This keeps
- * the animation simple (max-height + opacity transition on the hidden
- * portion) without needing a polyfill or library upgrade.
- */
-export function MessagesSection({ messages, previewCount = 4 }: Props) {
+export function MessagesSection({
+  messages,
+  previewCount = 4,
+}: Props) {
   const [expanded, setExpanded] = useState(false);
+  const contentId = useId();
 
-  const alwaysVisible = messages.slice(0, previewCount);
-  const hidden = messages.slice(previewCount);
-  const hasHidden = hidden.length > 0;
+  const visibleMessages = messages.slice(0, previewCount);
+  const hiddenMessages = messages.slice(previewCount);
+  const hasHiddenMessages = hiddenMessages.length > 0;
+
+  const toggleExpanded = () => setExpanded((value) => !value);
 
   return (
     <section>
-      <div className="mb-3 flex items-center justify-between">
+      <header className="mb-3 flex items-center justify-between">
         <h2 className="font-medium">Messages</h2>
-        <span className="text-xs text-muted-foreground">{messages.length} total</span>
-      </div>
 
-      {/* Always-visible preview messages */}
-      <div className="flex flex-col">
-        {alwaysVisible.map((m, i) => (
+        <span className="text-xs text-muted-foreground">
+          {messages.length} total
+        </span>
+      </header>
+
+      <div>
+        {visibleMessages.map((message, index) => (
           <MessageRow
-            key={m.id}
-            message={m}
-            showDivider={i < alwaysVisible.length - 1 || (hasHidden && !expanded)}
+            key={message.id}
+            message={message}
+            showDivider={
+              index < visibleMessages.length - 1 ||
+              (hasHiddenMessages && !expanded)
+            }
           />
         ))}
       </div>
 
-      {/* Collapsible remainder */}
-      {hasHidden && (
+      {hasHiddenMessages && (
         <>
           <div
+            id={contentId}
             className={[
-              "flex flex-col overflow-hidden transition-all duration-300",
-              expanded ? "max-h-[9999px] opacity-100" : "max-h-0 opacity-0",
+              "grid transition-[grid-template-rows,opacity] duration-300 ease-in-out",
+              expanded
+                ? "grid-rows-[1fr] opacity-100"
+                : "grid-rows-[0fr] opacity-0",
             ].join(" ")}
             aria-hidden={!expanded}
           >
-            {hidden.map((m, i) => (
-              <MessageRow
-                key={m.id}
-                message={m}
-                showDivider={i < hidden.length - 1}
-              />
-            ))}
+            <div className="min-h-0 overflow-hidden">
+              {hiddenMessages.map((message, index) => (
+                <MessageRow
+                  key={message.id}
+                  message={message}
+                  showDivider={index < hiddenMessages.length - 1}
+                />
+              ))}
+            </div>
           </div>
 
           <button
-            onClick={() => setExpanded((v) => !v)}
-            className="mt-3 flex w-full items-center justify-center gap-1.5 rounded-md border border-border bg-muted/30 py-2 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            type="button"
+            onClick={toggleExpanded}
+            aria-expanded={expanded}
+            aria-controls={contentId}
+            className={[
+              "mt-3 flex w-full items-center justify-center gap-1.5",
+              "rounded-md border border-border",
+              "bg-muted/30 px-3 py-2",
+              "text-xs font-medium text-muted-foreground",
+              "transition-colors",
+              "hover:bg-muted hover:text-foreground",
+              "focus-visible:outline-none focus-visible:ring-2",
+              "focus-visible:ring-ring focus-visible:ring-offset-2",
+            ].join(" ")}
           >
             {expanded ? (
               <>
-                <ChevronUp className="size-3.5" />
+                <ChevronUp />
                 Show less
               </>
             ) : (
               <>
-                <ChevronDown className="size-3.5" />
-                Show {hidden.length} more message{hidden.length === 1 ? "" : "s"}
+                <ChevronDown />
+                Show {hiddenMessages.length} more message
+                {hiddenMessages.length === 1 ? "" : "s"}
               </>
             )}
           </button>
@@ -91,17 +109,17 @@ export function MessagesSection({ messages, previewCount = 4 }: Props) {
 }
 
 function MessageRow({
-  message: m,
+  message,
   showDivider,
 }: {
   message: Message;
   showDivider: boolean;
 }) {
-  const isUser = m.role === "user";
-  const isSystem = m.role === "system";
+  const isUser = message.role === "user";
+  const isSystem = message.role === "system";
 
   return (
-    <div
+    <article
       className={[
         "flex gap-3 py-3",
         showDivider ? "border-b border-border/50" : "",
@@ -109,7 +127,8 @@ function MessageRow({
     >
       <span
         className={[
-          "mt-0.5 shrink-0 rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider",
+          "mt-0.5 shrink-0 rounded-md px-1.5 py-0.5",
+          "text-[10px] font-semibold uppercase tracking-wider",
           isUser
             ? "bg-primary/10 text-primary"
             : isSystem
@@ -117,19 +136,21 @@ function MessageRow({
               : "bg-muted/60 text-foreground/60",
         ].join(" ")}
       >
-        {m.role}
+        {message.role}
       </span>
+
       <p className="min-w-0 flex-1 whitespace-pre-wrap break-words text-sm leading-relaxed text-foreground/90">
-        {m.content}
+        {message.content}
       </p>
-    </div>
+    </article>
   );
 }
 
-function ChevronDown({ className }: { className?: string }) {
+function ChevronDown() {
   return (
     <svg
-      className={className}
+      aria-hidden="true"
+      className="size-3.5"
       viewBox="0 0 16 16"
       fill="none"
       stroke="currentColor"
@@ -142,10 +163,11 @@ function ChevronDown({ className }: { className?: string }) {
   );
 }
 
-function ChevronUp({ className }: { className?: string }) {
+function ChevronUp() {
   return (
     <svg
-      className={className}
+      aria-hidden="true"
+      className="size-3.5"
       viewBox="0 0 16 16"
       fill="none"
       stroke="currentColor"

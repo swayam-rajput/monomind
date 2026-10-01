@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { toast } from "sonner";
+import { toast } from "@/components/ui/toast";
 import { Button } from "@/components/ui/button";
 import { RotateCcw } from "lucide-react";
 
@@ -31,6 +31,10 @@ export function ReEmbedButton({
     }
     
     setIsLoading(true);
+    const toastId = toast.loading("Re-embedding conversation…", {
+      description: "Embedding chunks — this stays up until it finishes.",
+      duration: Infinity,
+    });
 
     try {
       const response = await fetch("/api/embed", {
@@ -49,10 +53,12 @@ export function ReEmbedButton({
       
       if (failedCount > 0) {
         toast.warning("Embedding partially completed", {
+          id: toastId,
           description: `${chunkCount - failedCount}/${chunkCount} chunks embedded successfully. ${failedCount} failed.`,
         });
       } else {
         toast.success("Re-embedding completed", {
+          id: toastId,
           description: `All ${chunkCount} chunks embedded successfully.`,
         });
       }
@@ -61,6 +67,7 @@ export function ReEmbedButton({
     } catch (error) {
       console.error("Re-embedding failed:", error);
       toast.error("Re-embedding failed", {
+        id: toastId,
         description: error instanceof Error ? error.message : "Unknown error occurred",
       });
     } finally {

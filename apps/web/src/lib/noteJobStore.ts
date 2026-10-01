@@ -11,7 +11,7 @@
  * background-persistence guarantee.
  */
 
-import { toast } from "sonner";
+import { toast } from "@/components/ui/toast";
 
 export interface NoteJobState {
   running: boolean;
@@ -63,6 +63,7 @@ export async function generateNoteBackground(conversationId: string): Promise<vo
 
   const toastId = toast.loading("Generating note…", {
     description: "This runs in the background — you can navigate away.",
+    duration: Infinity,
   });
 
   try {
@@ -111,6 +112,7 @@ export async function backfillNotesBackground(): Promise<void> {
 
   const toastId = toast.loading(`Generating notes (0 / ${targets.length})…`, {
     description: "Running in the background — you can navigate away.",
+    duration: Infinity,
   });
 
   let failed = 0;
@@ -122,6 +124,7 @@ export async function backfillNotesBackground(): Promise<void> {
     toast.loading(`Generating notes (${i + 1} / ${targets.length})…`, {
       id: toastId,
       description: `"${targets[i].title}"`,
+      duration: Infinity,
     });
 
     try {
