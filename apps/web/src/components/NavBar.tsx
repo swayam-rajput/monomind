@@ -2,8 +2,9 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { cn } from "@/lib/utils";
+
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { cn } from "@/lib/utils";
 
 const LINKS = [
   { href: "/import", label: "Import" },
@@ -14,32 +15,39 @@ const LINKS = [
   { href: "/settings", label: "Settings" },
 ];
 
-// nav-bar: canvas background, ink text, body-md-strong link labels,
-// {spacing.lg} {spacing.3xl} padding - per DESIGN-uber.md.
 export function NavBar() {
   const pathname = usePathname();
 
   return (
-    // Fixed height (h-14 = 3.5rem) so layout.tsx's <main> can reserve
-    // exactly this much space with pt-14 - if you change this height,
-    // update the matching pt-14/h-[calc(100vh-3.5rem)] in layout.tsx too.
-    <nav className="fixed w-full top-0 z-40 flex h-10 flex justify-center items-center border-b border-border bg-background">
-      <div className="mx-auto flex w-full max-w-4xl items-center gap-1 overflow-x-auto px-8">
-        <div>
-          <Link href="/" className="mr-16 text-lg font-bold text-foreground">
+    <nav className="fixed inset-x-0 top-0 z-40 h-10 border-b border-border bg-background">
+      <div className="mx-auto flex h-full w-full max-w-6xl items-center px-6">
+        {/* Logo */}
+        <div className="shrink-0">
+          <Link
+            href="/"
+            className="text-lg font-bold tracking-tight text-foreground"
+          >
             Monome
           </Link>
         </div>
-        <div className="flex items-center">
+
+        {/* Navigation */}
+        <div className="mx-auto flex items-center gap-1">
           {LINKS.map((link) => {
-            const active = pathname === link.href || pathname.startsWith(link.href + "/");
+            const active =
+              pathname === link.href ||
+              pathname.startsWith(`${link.href}/`);
+
             return (
               <Link
                 key={link.href}
                 href={link.href}
                 className={cn(
-                  "whitespace-nowrap rounded-pill px-3 py-1.5 text-xs font-medium transition-colors",
-                  active ? "bg-primary text-primary-foreground" : "text-foreground hover:bg-muted"
+                  "whitespace-nowrap rounded-full px-3 py-1.5",
+                  "text-xs font-medium transition-colors",
+                  active
+                    ? "bg-muted text-foreground"
+                    : "text-muted-foreground hover:bg-muted/60 hover:text-foreground"
                 )}
               >
                 {link.label}
@@ -48,7 +56,8 @@ export function NavBar() {
           })}
         </div>
 
-        <div className="ml-auto">
+        {/* Theme */}
+        <div className="shrink-0">
           <ThemeToggle />
         </div>
       </div>
