@@ -69,14 +69,7 @@
     /* ── Fonts ─────────────────────────────────────────────────────────── */
     --font-dm: 'DM Sans';
     --font-geist-mono: 'Geist Mono';
-    --info: #3b82f6;
-    --info-foreground: #1d4ed8;
 
-    --success: #10b981;
-    --success-foreground: #047857;
-
-    --warning: #f59e0b;
-    --warning-foreground: #b45309;
   }
 
   .dark {
@@ -117,14 +110,7 @@
     --sidebar-accent-foreground: 0 0% 90%;
     --sidebar-border: 0 0% 20%;
     --sidebar-ring: 0 0% 80%;
-    --info: #3b82f6;
-    --info-foreground: #1d4ed8;
 
-    --success: #10b981;
-    --success-foreground: #047857;
-
-    --warning: #f59e0b;
-    --warning-foreground: #b45309;
   }
 }
 

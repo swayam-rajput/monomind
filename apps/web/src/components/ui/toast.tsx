@@ -121,6 +121,14 @@ const TOAST_ICONS = {
   warning: <TriangleAlertIcon />,
 } as const;
 
+const iconColorClass = {
+  loading: "text-muted-foreground",
+  success: "text-green-400",
+  error: "text-red-400",
+  warning: "text-yellow-500",
+  info: "text-white",
+} as const;
+
 interface ToastItemProps extends React.ComponentProps<typeof ArkToast.Root> {
   /**
    * The toast item data
@@ -163,11 +171,9 @@ export const ToastItem = (props: ToastItemProps) => {
       <div className="flex items-start gap-1.5">
         <div
           className={cn(
-            "in-data-[type=warning]:text-warning",
-            "in-data-[type=success]:text-success",
-            "in-data-[type=error]:text-destructive",
-            "in-data-[type=info]:text-info",
-            "[&_svg]:pointer-events-none [&_svg]:h-lh [&_svg]:w-4 [&_svg]:shrink-0"
+            iconColorClass[toastData.type as keyof typeof iconColorClass] ??
+              "text-muted-foreground",
+            "[&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
           )}
           data-slot="toast-icon"
         >
