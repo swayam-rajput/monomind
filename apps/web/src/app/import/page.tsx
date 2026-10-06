@@ -2,363 +2,397 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { toast } from "@/components/ui/toast";
+
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { Input } from "@/components/ui/input";
 import { ChatSelectionDialog } from "@/components/ChatSelectionDialog";
+import { Input } from "@/components/ui/input";
+import { toast } from "@/components/ui/toast";
 import {
   getImportJobState,
-  subscribeImportJob,
-  runImportJob,
   isImportJobRunning,
+  runImportJob,
+  subscribeImportJob,
   type ImportJobState,
 } from "@/lib/importJobStore";
-import type { ParsedConversation, ImportPreviewResponse, ImportSummary } from "@monome/types";
+import type {
+  ImportPreviewResponse,
+  ImportSummary,
+  ParsedConversation,
+} from "@monome/types";
 
 export default function ImportPage() {
-  // Subscribes to the module-level job store (see importJobStore.ts)
-  // instead of owning this state locally - the import/embed/notes
-  // pipeline keeps running via that store even if this page unmounts
-  // (e.g. the user switches tabs), and re-mounting here just resumes
-  // showing whatever progress the store already has.
   const [job, setJob] = useState<ImportJobState>(getImportJobState());
-  const [pastedText, setPastedText] = useState("");
   const [showDialog, setShowDialog] = useState(false);
-  const [parsedConversations, setParsedConversations] = useState<ParsedConversation[]>([]);
-  const [skippedConversations, setSkippedConversations] = useState<{ identifier: string; reason: string }[]>([]);
-  const [isImporting, setIsImporting] = useState(false);
-  const [isProcessingFile, setIsProcessingFile] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [conversations, setConversations] = useState<ParsedConversation[]>([]);
+  const [skipped, setSkipped] = useState<
+    { identifier: string; reason: string }[]
+  >([]);
+  const [processing, setProcessing] = useState(false);
+  const [importing, setImporting] = useState(false);
+
+  const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => subscribeImportJob(setJob), []);
 
-  // const running = isImportJobRunning();
-
-  async function handleFileSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    const file = fileInputRef.current?.files?.[0];
+
+    const file = fileRef.current?.files?.[0];
+
     if (!file) {
       toast.error("Choose a .zip file first.");
       return;
     }
 
-    setIsProcessingFile(true);
-
-    const formData = new FormData();
-    formData.append("file", file);
+    setProcessing(true);
 
     try {
-      const response = await fetch("/api/import", { method: "POST", body: formData });
-      const result: ImportPreviewResponse | ImportSummary = await response.json();
+      const form = new FormData();
+      form.append("file", file);
+
+      const response = await fetch("/api/import", {
+        method: "POST",
+        body: form,
+      });
+
+      const result: ImportPreviewResponse | ImportSummary =
+        await response.json();
 
       if (!response.ok) {
-        toast.error("Import failed", { description: (result as any).error });
+        toast.error("Import failed", {
+          description: (result as any).error,
+        });
         return;
       }
 
       if ("type" in result && result.type === "preview") {
-        // Show dialog with conversations to select
-        setParsedConversations(result.conversations);
-        setSkippedConversations(result.skipped || []);
+        setConversations(result.conversations);
+        setSkipped(result.skipped ?? []);
         setShowDialog(true);
-      } else {
-        // Direct import (shouldn't happen with new flow, but keeping for safety)
-        toast.success("Import completed");
       }
-    } catch (err) {
-      toast.error("Import failed", { 
-        description: err instanceof Error ? err.message : "Unknown error" 
+    } catch (error) {
+      toast.error("Import failed", {
+        description:
+          error instanceof Error ? error.message : "Unknown error",
       });
     } finally {
-      setIsProcessingFile(false);
+      setProcessing(false);
     }
   }
 
-  async function handleSelectedImport(selectedConversations: ParsedConversation[]) {
-    setIsImporting(true);
-    
+  async function handleImport(selected: ParsedConversation[]) {
+    setImporting(true);
+
     await runImportJob(() =>
       fetch("/api/import", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
-          selectedConversations, 
-          skipped: skippedConversations 
+        body: JSON.stringify({
+          selectedConversations: selected,
+          skipped,
         }),
-      })
+      }),
     );
 
-    setIsImporting(false);
-    setShowDialog(false);
-    setParsedConversations([]);
-    setSkippedConversations([]);
-    
-    // Clear the file input
-    if (fileInputRef.current) {
-      fileInputRef.current.value = "";
-    }
+    setImporting(false);
+    closeDialog();
   }
 
-  function handleDialogClose() {
+  function closeDialog() {
     setShowDialog(false);
-    setParsedConversations([]);
-    setSkippedConversations([]);
-    
-    // Clear the file input
-    if (fileInputRef.current) {
-      fileInputRef.current.value = "";
-    }
-  }
+    setConversations([]);
+    setSkipped([]);
 
-  async function handlePasteSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    if (!pastedText.trim()) {
-      toast.error("Paste some conversation JSON first.");
-      return;
-    }
-
-    await runImportJob(() =>
-      fetch("/api/import", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ pastedText }),
-      })
-    );
+    if (fileRef.current) fileRef.current.value = "";
   }
 
   const { phase, error, summary, embedProgress, notesProgress } = job;
-  const running = isImportJobRunning();
-  const isAnyProcessRunning = running || isProcessingFile;
+  const busy = processing || isImportJobRunning();
 
   return (
-    <main className="mx-auto flex max-w-3xl flex-col gap-10 p-8">
-      <div>
-        <h1 className="text-2xl font-bold">Import conversations</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Everything runs locally on your machine. Once started, all three phases (import → embed → notes) keep
-          running in the background even if you navigate to another page.
-        </p>
+    <main className="mx-auto w-full max-w-5xl px-6 py-8">
+      <div className="space-y-6">
+        <header>
+          <h1 className="text-2xl font-semibold tracking-tight">Import</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Import your AI conversations into Monome.
+          </p>
+        </header>
+
+        <ChatSelectionDialog
+          conversations={conversations}
+          isOpen={showDialog}
+          onClose={closeDialog}
+          onImport={handleImport}
+          isImporting={importing}
+        />
+
+        <div className="grid gap-6 lg:grid-cols-[1fr_260px]">
+          <div className="space-y-5">
+            {/* Upload */}
+            <form
+              onSubmit={handleSubmit}
+              className="rounded-xl border border-border bg-card"
+            >
+              <div className="flex min-h-64 flex-col items-center justify-center px-6 text-center">
+                <div className="flex size-10 items-center justify-center rounded-lg bg-muted text-muted-foreground">
+                  ↑
+                </div>
+
+                <h2 className="mt-4 text-sm font-medium">
+                  ChatGPT export
+                </h2>
+
+                <p className="mt-1 max-w-md text-sm text-muted-foreground">
+                  Select the .zip file from ChatGPT. Monome will find
+                  conversations.json automatically.
+                </p>
+
+                <div className="mt-5 flex w-full max-w-sm gap-2">
+                  <Input
+                    ref={fileRef}
+                    type="file"
+                    accept=".zip"
+                    disabled={busy}
+                  />
+
+                  <Button type="submit" disabled={busy}>
+                    {processing ? "Processing…" : "Import"}
+                  </Button>
+                </div>
+              </div>
+            </form>
+
+            {/* Progress */}
+            {phase === "embedding" && embedProgress && (
+              <Progress
+                label="Embedding"
+                current={embedProgress.current}
+                total={embedProgress.total}
+                error={
+                  embedProgress.failedChunks
+                    ? `${embedProgress.failedChunks} chunks failed.`
+                    : undefined
+                }
+              />
+            )}
+
+            {phase === "generating-notes" && notesProgress && (
+              <Progress
+                label="Generating notes"
+                current={notesProgress.current}
+                total={notesProgress.total}
+                error={
+                  notesProgress.failedNotes
+                    ? `${notesProgress.failedNotes} notes failed.`
+                    : undefined
+                }
+              />
+            )}
+
+            {/* Error */}
+            {phase === "error" && error && (
+              <div className="rounded-lg border border-destructive/40 bg-destructive/5 px-4 py-3 text-sm text-destructive">
+                {error}
+              </div>
+            )}
+
+            {/* Complete */}
+            {phase === "done" && summary && (
+              <Result
+                summary={summary}
+                embedProgress={embedProgress}
+                notesProgress={notesProgress}
+              />
+            )}
+          </div>
+
+          {/* Status */}
+          <aside className="lg:border-l lg:pl-6">
+            <p className="text-xs font-medium text-muted-foreground">
+              Status
+            </p>
+
+            <div className="mt-3 space-y-3">
+              {["Import", "Embed", "Notes"].map((label, i) => {
+                const active =
+                  (i === 0 && phase === "importing") ||
+                  (i === 1 && phase === "embedding") ||
+                  (i === 2 && phase === "generating-notes");
+
+                const done =
+                  (i === 0 &&
+                    ["embedding", "generating-notes", "done"].includes(
+                      phase,
+                    )) ||
+                  (i === 1 &&
+                    ["generating-notes", "done"].includes(phase)) ||
+                  (i === 2 && phase === "done");
+
+                return (
+                  <div key={label} className="flex items-center gap-3">
+                    <div
+                      className={`flex size-6 items-center justify-center rounded-full text-[11px] ${
+                        done
+                          ? "bg-foreground text-background"
+                          : active
+                            ? "bg-primary text-primary-foreground"
+                            : "bg-muted text-muted-foreground"
+                      }`}
+                    >
+                      {done ? "✓" : i + 1}
+                    </div>
+
+                    <span
+                      className={
+                        active
+                          ? "text-sm font-medium"
+                          : "text-sm text-muted-foreground"
+                      }
+                    >
+                      {label}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+
+            <p className="mt-6 text-xs leading-5 text-muted-foreground">
+              Import, embedding, and note generation continue in the
+              background if you leave this page.
+            </p>
+          </aside>
+        </div>
+      </div>
+    </main>
+  );
+}
+
+function Progress({
+  label,
+  current,
+  total,
+  error,
+}: {
+  label: string;
+  current: number;
+  total: number;
+  error?: string;
+}) {
+  const percent = total ? (current / total) * 100 : 0;
+
+  return (
+    <div className="rounded-lg border border-border bg-muted/20 p-4">
+      <div className="flex justify-between text-sm">
+        <span className="font-medium">{label}</span>
+        <span className="text-muted-foreground">
+          {current}/{total}
+        </span>
       </div>
 
-      <ChatSelectionDialog
-        conversations={parsedConversations}
-        isOpen={showDialog}
-        onClose={handleDialogClose}
-        onImport={handleSelectedImport}
-        isImporting={isImporting}
-      />
-
-      {/* ── Phase step indicator (shown while running or done) ─────── */}
-      {phase !== "idle" && phase !== "error" && (
-        <div className="flex items-center gap-2 text-xs">
-          {(
-            [
-              { key: "importing", label: "Import" },
-              { key: "embedding", label: "Embed" },
-              { key: "generating-notes", label: "Notes" },
-              { key: "done", label: "Done" },
-            ] as { key: typeof phase; label: string }[]
-          ).map((step, i, arr) => {
-            const phaseOrder: Record<string, number> = { importing: 0, embedding: 1, "generating-notes": 2, done: 3 };
-            const current = phaseOrder[phase] ?? 0;
-            const stepIdx = phaseOrder[step.key] ?? 0;
-            const isDone = stepIdx < current;
-            const isActive = stepIdx === current;
-            return (
-              <span key={step.key} className="flex items-center gap-2">
-                <span
-                  className={
-                    isDone
-                      ? "font-medium text-foreground"
-                      : isActive
-                        ? "shimmer text font-medium text-primary"
-                        : "text-muted-foreground"
-                  }
-                >
-                  {isDone ? "✓" : `${stepIdx + 1}.`} {step.label}
-                </span>
-                {i < arr.length - 1 && <span className="text-muted-foreground/40">›</span>}
-              </span>
-            );
-          })}
-        </div>
-      )}
-
-      <form onSubmit={handleFileSubmit} className="flex flex-col gap-3 rounded-lg border border-border bg-card p-6">
-        <h2 className="font-medium">ChatGPT export (.zip)</h2>
-        <p className="text-sm text-muted-foreground">
-          Upload the .zip file you get from ChatGPT Settings &rarr; Data controls &rarr; Export data. We look for
-          conversations.json inside it.
-        </p>
-        
-        {isProcessingFile && (
-          <div className="rounded-md bg-muted/50 p-3 text-sm">
-            <div className="flex items-center gap-2">
-              <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent"></div>
-              <span>Processing ChatGPT export file...</span>
-            </div>
-            <p className="mt-1 text-xs text-muted-foreground">
-              Parsing conversations from the export. This may take a moment for large files.
-            </p>
-          </div>
-        )}
-        
-        <Input ref={fileInputRef} type="file" accept=".zip" disabled={isProcessingFile} />
-        <Button type="submit" disabled={isAnyProcessRunning} className="w-fit">
-          {isProcessingFile ? "Processing export..." : phase === "importing" ? "Importing..." : "Import export"}
-        </Button>
-      </form>
-
-      {/* <form onSubmit={handlePasteSubmit} className="flex flex-col gap-3 rounded-lg border border-border bg-card p-6">
-        <h2 className="font-medium">Paste a single conversation (for quick testing)</h2>
-        <p className="text-sm text-muted-foreground">
-          Paste either{" "}
-          <code className="rounded-md bg-muted px-1 py-0.5">{'{ "title", "messages": [{ "role", "content" }] }'}</code>{" "}
-          or a raw conversation object copied from conversations.json.
-        </p>
-        <Textarea
-          value={pastedText}
-          onChange={(e) => setPastedText(e.target.value)}
-          rows={10}
-          placeholder='{"title": "Test chat", "messages": [{"role": "user", "content": "Hello"}, {"role": "assistant", "content": "Hi there"}]}'
-          className="font-mono text-xs"
+      <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-muted">
+        <div
+          className="h-full rounded-full bg-primary transition-all"
+          style={{ width: `${percent}%` }}
         />
-        <Button type="submit" disabled={isAnyProcessRunning} className="w-fit">
-          {phase === "importing" ? "Importing..." : "Import pasted conversation"}
-        </Button>
-      </form> */}
+      </div>
 
-      {phase === "embedding" && embedProgress && (
-        <div className="rounded-lg border border-border bg-card p-6">
-          <p className="text-sm font-medium">
-            Embedding conversation {embedProgress.current} of {embedProgress.total}...
-          </p>
-          <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-muted">
-            <div
-              className="h-full bg-primary transition-all"
-              style={{ width: `${(embedProgress.current / embedProgress.total) * 100}%` }}
-            />
-          </div>
-          {embedProgress.failedChunks > 0 && (
-            <p className="mt-2 text-xs text-muted-foreground">
-              {embedProgress.failedChunks} chunk{embedProgress.failedChunks === 1 ? "" : "s"} failed to embed so far
-              (will be retryable later).
-            </p>
-          )}
-        </div>
+      {error && (
+        <p className="mt-2 text-xs text-muted-foreground">{error}</p>
       )}
+    </div>
+  );
+}
 
-      {phase === "generating-notes" && notesProgress && (
-        <div className="rounded-lg border border-border bg-card p-6">
-          <p className="text-sm font-medium">
-            Generating notes for conversation {notesProgress.current} of {notesProgress.total}...
-          </p>
-          <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-muted">
-            <div
-              className="h-full bg-primary transition-all"
-              style={{ width: `${(notesProgress.current / notesProgress.total) * 100}%` }}
-            />
-          </div>
-          {notesProgress.failedNotes > 0 && (
-            <p className="mt-2 text-xs text-muted-foreground">
-              {notesProgress.failedNotes} note{notesProgress.failedNotes === 1 ? "" : "s"} failed to generate so far.
-            </p>
-          )}
-        </div>
-      )}
+function Result({
+  summary,
+  embedProgress,
+  notesProgress,
+}: {
+  summary: ImportSummary;
+  embedProgress: ImportJobState["embedProgress"];
+  notesProgress: ImportJobState["notesProgress"];
+}) {
+  const duplicates = summary.duplicateCount ?? 0;
+  const malformed = summary.skippedCount - duplicates;
 
-      {phase === "error" && error && (
-        <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-4 text-sm text-destructive">
-          {error}
-        </div>
-      )}
-
-      {phase === "done" && summary && (
-        <div className="rounded-lg border border-border bg-card p-6">
-          <h2 className="font-medium">
-            Imported {summary.importedCount} conversation{summary.importedCount === 1 ? "" : "s"}
-            {summary.duplicateCount && summary.duplicateCount > 0 ? (
-              <span className="ml-1 text-muted-foreground">
-                · {summary.duplicateCount} already existed and {summary.duplicateCount === 1 ? "was" : "were"} skipped
-              </span>
-            ) : null}
-            {summary.skippedCount - (summary.duplicateCount ?? 0) > 0 ? (
-              <span className="ml-1 text-muted-foreground">
-                · {summary.skippedCount - (summary.duplicateCount ?? 0)} malformed and skipped
-              </span>
-            ) : null}
-          </h2>
-
-          {summary.warnings.length > 0 && (
-            <ul className="mt-3 flex flex-col gap-1 text-sm text-muted-foreground">
-              {summary.warnings.map((w, i) => (
-                <li key={i}>
-                  <span className="font-medium">{w.identifier}:</span> {w.reason}
-                </li>
-              ))}
-            </ul>
-          )}
-
-          {embedProgress && (
-            <p className="mt-3 text-sm">
-              Embedded {embedProgress.current} of {embedProgress.total} conversation
-              {embedProgress.total === 1 ? "" : "s"}.
-              {embedProgress.failedChunks > 0 &&
-                ` ${embedProgress.failedChunks} chunk${embedProgress.failedChunks === 1 ? "" : "s"} failed and can be retried from the conversation detail page.`}
-              {embedProgress.providerErrors.length > 0 && (
-                <span className="mt-1 block text-destructive">{embedProgress.providerErrors[0]}</span>
-              )}
-            </p>
-          )}
-
-          {notesProgress && (
-            <p className="mt-3 text-sm">
-              Generated notes for {notesProgress.total - notesProgress.failedNotes} of {notesProgress.total}{" "}
-              conversation{notesProgress.total === 1 ? "" : "s"}.
-            </p>
-          )}
-
-          {summary.importedCount > 0 && (
-            <Link href="/conversations" className="mt-4 inline-block text-sm font-medium text-link underline">
-              View imported conversations &rarr;
-            </Link>
-          )}
-        </div>
-      )}
-
-      {phase === "done" && notesProgress && (notesProgress.failedNotes > 0 || notesProgress.providerErrors.length > 0) && (
-        <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-4 text-sm text-destructive">
-          <p className="font-medium">
-            {notesProgress.failedNotes} note{notesProgress.failedNotes === 1 ? "" : "s"} could not be generated.
-          </p>
-          {notesProgress.providerErrors.length > 0 && <p className="mt-1">{notesProgress.providerErrors[0]}</p>}
-          <p className="mt-2">
-            You can retry from the{" "}
-            <Link href="/conversations" className="underline">
-              Conversations page
-            </Link>{" "}
-            once the issue above is resolved (e.g. start Ollama) - a "Generate missing notes" button will appear
-            there.
+  return (
+    <div className="rounded-lg border border-border bg-card p-4">
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="text-sm font-medium">Import complete</p>
+          <p className="mt-0.5 text-xs text-muted-foreground">
+            Your conversations are ready.
           </p>
         </div>
+
+        <span className="flex size-7 items-center justify-center rounded-full bg-foreground text-background">
+          ✓
+        </span>
+      </div>
+
+      <div className="mt-4 grid grid-cols-3 gap-2">
+        <Stat label="Imported" value={summary.importedCount} />
+
+        <Stat
+          label="Embedded"
+          value={
+            embedProgress
+              ? `${embedProgress.current}/${embedProgress.total}`
+              : "—"
+          }
+        />
+
+        <Stat
+          label="Notes"
+          value={
+            notesProgress
+              ? notesProgress.total - notesProgress.failedNotes
+              : "—"
+          }
+        />
+      </div>
+
+      {(duplicates > 0 || malformed > 0) && (
+        <p className="mt-3 text-xs text-muted-foreground">
+          {duplicates > 0 &&
+            `${duplicates} duplicate${duplicates === 1 ? "" : "s"} skipped. `}
+          {malformed > 0 &&
+            `${malformed} malformed conversation${
+              malformed === 1 ? "" : "s"
+            } skipped.`}
+        </p>
       )}
 
-      {phase === "done" && embedProgress && (embedProgress.failedChunks > 0 || embedProgress.providerErrors.length > 0) && (
-        <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-4 text-sm text-destructive">
-          <p className="font-medium">
-            {embedProgress.failedChunks} chunk{embedProgress.failedChunks === 1 ? "" : "s"} failed to embed.
-          </p>
-          {embedProgress.providerErrors.length > 0 && <p className="mt-1">{embedProgress.providerErrors[0]}</p>}
-          <p className="mt-2">
-            Retryable from each conversation's detail page under{" "}
-            <Link href="/conversations" className="underline">
-              Conversations
-            </Link>
-            .
-          </p>
-        </div>
+      {summary.warnings.length > 0 && (
+        <p className="mt-3 text-xs text-muted-foreground">
+          {summary.warnings[0].identifier}: {summary.warnings[0].reason}
+        </p>
       )}
-    </main>
+
+      {summary.importedCount > 0 && (
+        <Link
+          href="/conversations"
+          className="mt-4 inline-block text-sm font-medium text-link underline underline-offset-2"
+        >
+          View conversations →
+        </Link>
+      )}
+    </div>
+  );
+}
+
+function Stat({
+  label,
+  value,
+}: {
+  label: string;
+  value: string | number;
+}) {
+  return (
+    <div className="rounded-md bg-muted/40 px-3 py-2">
+      <p className="text-[11px] text-muted-foreground">{label}</p>
+      <p className="mt-0.5 text-sm font-medium tabular-nums">{value}</p>
+    </div>
   );
 }
