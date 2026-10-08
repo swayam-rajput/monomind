@@ -13,7 +13,6 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 import { ChatSidebar } from "./ChatSidebar";
-import SourceSkimSheet from "./SourceSkimSheet";
 import {
   ensureSessionLoaded,
   getSessionState,
@@ -41,11 +40,6 @@ export default function ChatPage() {
   const [pageStatus, setPageStatus] = useState<PageStatus>("loading");
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [sidebarRefreshKey, setSidebarRefreshKey] = useState(0);
-
-  const [skimSource, setSkimSource] = useState<{
-    conversationId: string;
-    messageId: string;
-  } | null>(null);
 
   const [input, setInput] = useState("");
   const [, forceRerender] = useState(0);
@@ -297,10 +291,9 @@ export default function ChatPage() {
                         editAsPrompt(m.text ?? "")
                       }
                       onCitationClick={(conversationId, messageId) =>
-                        setSkimSource({
-                          conversationId,
-                          messageId,
-                        })
+                        router.push(
+                          `/conversations/${conversationId}#message-${messageId}`,
+                        )
                       }
                     />
                   ),
@@ -341,11 +334,7 @@ export default function ChatPage() {
         </div>
       </SidebarInset>
 
-      <SourceSkimSheet
-        conversationId={skimSource?.conversationId ?? null}
-        messageId={skimSource?.messageId ?? null}
-        onClose={() => setSkimSource(null)}
-      />
+
     </SidebarProvider>
   );
 }
@@ -460,9 +449,7 @@ function AssistantBubble({
         <div className="relative pl-1">
           {m.streaming && !m.text ? (
             <div className="flex items-center gap-1.5 py-1">
-              <span className="size-1.5 animate-pulse rounded-full bg-foreground/40" />
-              <span className="size-1.5 animate-pulse rounded-full bg-foreground/25 [animation-delay:150ms]" />
-              <span className="size-1.5 animate-pulse rounded-full bg-foreground/15 [animation-delay:300ms]" />
+
             </div>
           ) : (
             <div className="text-[14px] leading-[1.8] tracking-[-0.005em] text-foreground/85 dark:text-white/[0.86]">
@@ -471,7 +458,7 @@ function AssistantBubble({
               {m.streaming && (
                 <span
                   aria-hidden="true"
-                  className="ml-1 inline-block h-[1em] w-[2px] translate-y-[2px] animate-pulse rounded-full bg-foreground/40 dark:bg-white/40"
+                  className="ml-1 inline-block h-[1em] w-[6px] translate-y-[2px] animate-pulse bg-foreground/40 dark:bg-white/40"
                 />
               )}
             </div>
@@ -487,11 +474,13 @@ function AssistantBubble({
                     key={c.index}
                     type="button"
                     variant="outline"
-                    onClick={() =>
-                      onCitationClick(
+                    onClick={() => {
+                      console.log(c.messageId)
+                      return onCitationClick(
                         c.conversationId,
                         c.messageId,
                       )
+                    }
                     }
                     title={c.conversationTitle}
                     className="group/source"
