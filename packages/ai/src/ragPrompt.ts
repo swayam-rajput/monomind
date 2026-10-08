@@ -12,6 +12,7 @@ export interface EvidenceItem {
   conversationId: string;
   conversationTitle: string;
   conversationCreatedAt: string;
+  messageId: string;
   text: string;
 }
 

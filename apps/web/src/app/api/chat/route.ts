@@ -79,6 +79,7 @@ export async function POST(request: NextRequest) {
               conversationTitle: conversation.title,
               conversationCreatedAt: conversation.createdAt.toISOString(),
               text: hit.text,
+              messageId: hit.startMessageId,
             };
           })
           .filter((e): e is EvidenceItem => e !== null);
@@ -100,6 +101,7 @@ export async function POST(request: NextRequest) {
             index: e.index,
             conversationId: e.conversationId,
             conversationTitle: e.conversationTitle,
+            messageId: e.messageId,
           }));
 
         send({ type: "citations", citations });

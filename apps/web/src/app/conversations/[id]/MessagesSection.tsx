@@ -1,8 +1,7 @@
 "use client";
 
 import { useEffect, useId, useRef, useState } from "react";
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
+import Markdown from '@/components/Markdown';
 import { ChevronDown, Copy, Check } from "lucide-react";
 
 interface Message {
@@ -19,6 +18,7 @@ const CLAMP_AT = 400; // characters before a message gets clamped
 
 export function MessagesSection({ messages }: Props) {
   const [expanded, setExpanded] = useState(false);
+  const [visibleCount, setVisibleCount] = useState(20);
   const [hasExpanded, setHasExpanded] = useState(false);
   const contentId = useId();
 
@@ -29,6 +29,9 @@ export function MessagesSection({ messages }: Props) {
     setHasExpanded(true);
   };
 
+  const visibleMessages = messages.slice(0, visibleCount);
+  const hasMore = visibleCount < messages.length;
+
   return (
     <section>
       <button
@@ -36,12 +39,11 @@ export function MessagesSection({ messages }: Props) {
         onClick={toggle}
         aria-expanded={expanded}
         aria-controls={contentId}
-        className="group flex w-full items-center justify-between border-b border-border/70 py-3 text-left
-                   transition-colors hover:text-foreground
-                   focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        className="group flex w-full items-center justify-between border-b border-border/70 py-3 text-left transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
       >
         <div className="flex items-center gap-2.5">
           <span className="font-medium">Messages</span>
+
           <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium tabular-nums text-muted-foreground">
             {messages.length}
           </span>
@@ -61,15 +63,35 @@ export function MessagesSection({ messages }: Props) {
         inert={!expanded}
         className={[
           "grid transition-[grid-template-rows,opacity] duration-300 ease-out",
-          expanded ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0",
+          expanded
+            ? "grid-rows-[1fr] opacity-100"
+            : "grid-rows-[0fr] opacity-0",
         ].join(" ")}
       >
         <div className="min-h-0 overflow-hidden">
           {hasExpanded && (
             <div className="space-y-8 py-6">
-              {messages.map((message) => (
-                <ChatMessage key={message.id} message={message} />
+              {visibleMessages.map((message) => (
+                <ChatMessage
+                  key={message.id}
+                  message={message}
+                />
               ))}
+
+              {hasMore && (
+                <button
+                  type="button"
+                  onClick={() =>
+                    setVisibleCount((count) => count + 20)
+                  }
+                  className="mx-auto block rounded-lg px-3 py-2 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                >
+                  Show more
+                  <span className="ml-1 text-muted-foreground/50">
+                    ({messages.length - visibleCount} remaining)
+                  </span>
+                </button>
+              )}
             </div>
           )}
         </div>
@@ -205,125 +227,3 @@ function ChatMessage({ message }: { message: Message }) {
   );
 }
 
-function Markdown({ content }: { content: string }) {
-  return (
-    <div className="
-      text-[13px] leading-6
-      text-foreground/90
-      [&>p]:mb-3
-      [&>p:last-child]:mb-0
-    ">
-      <ReactMarkdown
-        remarkPlugins={[remarkGfm]}
-        components={{
-          p: ({ children }) => (
-            <p className="mb-3 last:mb-0">{children}</p>
-          ),
-
-          strong: ({ children }) => (
-            <strong className="font-semibold text-foreground">
-              {children}
-            </strong>
-          ),
-
-          em: ({ children }) => (
-            <em className="text-foreground/90">{children}</em>
-          ),
-
-          h1: ({ children }) => (
-            <h1 className="mb-3 text-base font-semibold text-foreground">
-              {children}
-            </h1>
-          ),
-
-          h2: ({ children }) => (
-            <h2 className="mb-2.5 text-[15px] font-semibold text-foreground">
-              {children}
-            </h2>
-          ),
-
-          h3: ({ children }) => (
-            <h3 className="mb-2 text-sm font-semibold text-foreground">
-              {children}
-            </h3>
-          ),
-
-          ul: ({ children }) => (
-            <ul className="mb-3 list-disc space-y-1 pl-5">
-              {children}
-            </ul>
-          ),
-
-          ol: ({ children }) => (
-            <ol className="mb-3 list-decimal space-y-1 pl-5">
-              {children}
-            </ol>
-          ),
-
-          li: ({ children }) => (
-            <li className="pl-0.5">{children}</li>
-          ),
-
-          pre: ({ children }) => (
-            <pre className="
-              my-3 overflow-x-auto
-              rounded-lg border border-border/60
-              bg-muted/70 p-3
-              text-[12px] leading-5
-            ">
-              {children}
-            </pre>
-          ),
-
-          code: ({ children, className }) =>
-            className ? (
-              <code className={`${className} font-mono`}>
-                {children}
-              </code>
-            ) : (
-              <code className="
-                rounded bg-muted
-                px-1.5 py-0.5
-                font-mono text-[0.9em]
-                text-foreground
-              ">
-                {children}
-              </code>
-            ),
-
-          blockquote: ({ children }) => (
-            <blockquote className="
-              my-3 border-l-2
-              border-border pl-4
-              text-muted-foreground
-            ">
-              {children}
-            </blockquote>
-          ),
-
-          hr: () => (
-            <hr className="my-4 border-border/60" />
-          ),
-
-          a: ({ children, href }) => (
-            <a
-              href={href}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="
-                text-primary
-                underline underline-offset-2
-                decoration-primary/40
-                hover:decoration-primary
-              "
-            >
-              {children}
-            </a>
-          ),
-        }}
-      >
-        {content}
-      </ReactMarkdown>
-    </div>
-  );
-}

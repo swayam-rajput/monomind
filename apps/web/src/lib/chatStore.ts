@@ -15,6 +15,7 @@ export interface Citation {
   index: number;
   conversationId: string;
   conversationTitle: string;
+  messageId: string;
 }
 
 export interface ChatMessage {
