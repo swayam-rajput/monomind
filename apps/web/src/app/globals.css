@@ -71,6 +71,10 @@
     /* ── Fonts ─────────────────────────────────────────────────────────── */
     --font-dm: 'DM Sans';
     --font-geist-mono: 'Geist Mono';
+    --font-oxanium: 'Oxanium', sans-serif;
+    --font-questrial: 'Questrial', sans-serif;
+    --font-alef: "Alef", sans-serif;
+
 
   }
 
@@ -113,6 +117,10 @@
     --sidebar-border: 0 0% 20%;
     --sidebar-ring: 0 0% 80%;
 
+    --font-oxanium: 'Oxanium', sans-serif;
+    --font-questrial: 'Questrial', sans-serif;
+    --font-alef: 'Alef', sans-serif;
+
   }
 }
 
@@ -123,6 +131,10 @@
   ::after {
     border-color: hsl(var(--border));
     box-sizing: border-box;
+  }
+
+  .font-alef {
+    font-family: var(--font-alef);
   }
 
   ::selection {

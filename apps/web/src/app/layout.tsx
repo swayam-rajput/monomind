@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { DM_Sans, Lato } from "next/font/google";
+import { Alef, DM_Sans, Lato } from "next/font/google";
 import "./globals.css";
 import { NavBar } from "@/components/NavBar";
 import { cn } from "@/lib/utils";
@@ -9,9 +9,16 @@ import { ThemeProvider } from "@/components/ui/theme-provider"
 // Loaded from local files (not next/font/google) so the app never needs a
 // network call at build time - consistent with the rest of Monome running
 // fully offline.
+
+const alef = Alef({
+  variable: '--font-alef',
+  subsets: ['latin'],
+  weight: "400"
+});
+
 const dm = DM_Sans({
-  subsets:['latin'],
-  variable:"--font-dm",
+  subsets: ['latin'],
+  variable: "--font-dm",
 })
 export const metadata: Metadata = {
   title: "Monome",
@@ -24,15 +31,15 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={cn(dm.variable)}>
+    <html lang="en" className={cn(alef.variable, dm.variable)}>
       <body
-        className={` ${dm.variable} antialiased`}
+        className={` ${dm.variable} ${alef.variable} antialiased`}
       >
-        <ThemeProvider 
-            attribute="class"
-            defaultTheme="system"
-            enableSystem
-            disableTransitionOnChange>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange>
           <NavBar />
           {/* NavBar is `fixed` (h-10 = 2.5rem = 40px). pt-10 pushes content
               below it; overflow-auto lets scrollable pages work normally while

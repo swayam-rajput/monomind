@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { cn } from "@/lib/utils";
-
+import { Alef, Questrial, Oxanium } from 'next/font/google';
 const LINKS = [
   { href: "/import", label: "Import" },
   { href: "/conversations", label: "Conversations" },
@@ -14,6 +14,7 @@ const LINKS = [
   { href: "/chat", label: "Chat" },
   { href: "/settings", label: "Settings" },
 ];
+
 
 export function NavBar() {
   const pathname = usePathname();
@@ -25,7 +26,7 @@ export function NavBar() {
         <div className="shrink-0">
           <Link
             href="/"
-            className="text-lg font-bold tracking-tight text-foreground"
+            className="flex text-lg font-alef tracking-tight text-foreground"
           >
             Monome
           </Link>

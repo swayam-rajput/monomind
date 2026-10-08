@@ -19,9 +19,6 @@ export default function Home() {
         {/* Hero */}
         <section className="flex min-h-[calc(100dvh-3.5rem)] items-center justify-center">
           <div className="w-full max-w-2xl text-center">
-            <p className="mb-5 text-sm font-medium tracking-wide text-muted-foreground">
-              Monome
-            </p>
 
             <h1 className="text-5xl font-semibold tracking-[-0.04em] sm:text-6xl">
               Your conversations,
