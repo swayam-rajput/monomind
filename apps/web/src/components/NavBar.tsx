@@ -23,16 +23,24 @@ export function NavBar() {
     <nav className="fixed inset-x-0 top-0 z-40 h-10 border-b border-border bg-background">
       <div className="mx-auto flex h-full w-full max-w-6xl items-center px-6">
         {/* Logo */}
-        <div className="shrink-0">
-          <Link
-            href="/"
-            className="flex text-lg font-alef tracking-tight text-foreground"
-          >
-            Monome
-          </Link>
+        <div className="group relative h-5 overflow-hidden">
+          <div className="transition-transform duration-300 group-hover:-translate-y-5">
+            <Link
+              href="/"
+              className="flex h-5 items-center text-lg font-alef tracking-tight text-foreground"
+            >
+              Monome
+            </Link>
+
+            <Link
+              href="/"
+              className="flex h-5 items-center text-lg font-alef tracking-tight text-foreground"
+            >
+              Monome
+            </Link>
+          </div>
         </div>
 
-        {/* Navigation */}
         <div className="mx-auto flex items-center gap-1">
           {LINKS.map((link) => {
             const active =
@@ -44,7 +52,7 @@ export function NavBar() {
                 key={link.href}
                 href={link.href}
                 className={cn(
-                  "whitespace-nowrap rounded-full px-3 py-1.5",
+                  "flex h-7 items-center whitespace-nowrap rounded-full px-3",
                   "text-xs font-medium transition-colors",
                   active
                     ? "bg-muted text-foreground"
@@ -62,6 +70,6 @@ export function NavBar() {
           <ThemeToggle />
         </div>
       </div>
-    </nav>
+    </nav >
   );
 }
