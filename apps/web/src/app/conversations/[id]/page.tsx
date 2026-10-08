@@ -91,11 +91,7 @@ export default async function ConversationDetailPage({
             <div className="flex items-center gap-2">
               <span className="text-sm font-medium">Note</span>
 
-              {note ? (
-                <span className="text-xs text-emerald-600 dark:text-emerald-400">
-                  Ready
-                </span>
-              ) : (
+              {!note && (
                 <span className="text-xs text-muted-foreground">
                   Not generated
                 </span>
