@@ -67,7 +67,7 @@ export async function POST(request: NextRequest) {
 
         const conversationIds = Array.from(new Set(relevantHits.map((h) => h.conversationId)));
         const conversations = await prisma.conversation.findMany({ where: { id: { in: conversationIds } } });
-        const conversationById = new Map(conversations.map((c) => [c.id, c]));
+        const conversationById = new Map(conversations.map((c: {id: string, title: string, createdAt: Date}) => [c.id, c]));
 
         const evidence: EvidenceItem[] = relevantHits
           .map((hit, i) => {
