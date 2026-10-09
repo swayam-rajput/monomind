@@ -46,10 +46,9 @@ export async function POST(request: NextRequest) {
       where: { id: { in: conversationIds } },
       include: { notes: true },
     });
-    const conversationById = new Map(conversations.map((c: {
-      notes: any; id: string; title: string; createdAt: Date
-    }) => [c.id, c]));
-
+    const conversationById = new Map(
+      conversations.map((c) => [c.id, c] as const)
+    );
     const results: SearchApiResult[] = hits
       .map((hit) => {
         const conversation = conversationById.get(hit.conversationId);
