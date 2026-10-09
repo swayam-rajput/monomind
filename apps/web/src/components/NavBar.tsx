@@ -5,7 +5,6 @@ import { usePathname } from "next/navigation";
 
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { cn } from "@/lib/utils";
-import { Alef, Questrial, Oxanium } from 'next/font/google';
 const LINKS = [
   { href: "/import", label: "Import" },
   { href: "/conversations", label: "Conversations" },
@@ -27,16 +26,18 @@ export function NavBar() {
           <div className="transition-transform duration-300 group-hover:-translate-y-5">
             <Link
               href="/"
-              className="flex h-5 items-center text-lg font-alef tracking-tight text-foreground"
+              className="flex h-5 items-center text-lg font-aboreto tracking-tight text-foreground"
             >
-              Monome
+              M
+              <p className="font-sans text-xs tracking-wider">onome</p>
             </Link>
 
             <Link
               href="/"
-              className="flex h-5 items-center text-lg font-alef tracking-tight text-foreground"
+              className="flex h-5 items-center text-lg font-aboreto tracking-tight text-foreground"
             >
-              Monome
+              M
+              <p className="font-sans text-xs tracking-wider">onome</p>
             </Link>
           </div>
         </div>

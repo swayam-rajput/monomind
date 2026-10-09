@@ -74,6 +74,7 @@
     --font-oxanium: 'Oxanium', sans-serif;
     --font-questrial: 'Questrial', sans-serif;
     --font-alef: "Alef", sans-serif;
+    --font-aboreto: "Aboreto", sans-serif;
 
 
   }
@@ -120,6 +121,8 @@
     --font-oxanium: 'Oxanium', sans-serif;
     --font-questrial: 'Questrial', sans-serif;
     --font-alef: 'Alef', sans-serif;
+    --font-aboreto: Aboreto, sans-serif;
+
 
   }
 }
@@ -135,6 +138,10 @@
 
   .font-alef {
     font-family: var(--font-alef);
+  }
+
+  .font-aboreto {
+    font-family: var(--font-aboreto);
   }
 
   ::selection {
@@ -274,12 +281,10 @@ body::-webkit-scrollbar {
 
 body::-webkit-scrollbar-track {
   background: none;
-  /* color of the tracking area */
 }
 
 body::-webkit-scrollbar-thumb {
   background: rgba(128, 128, 128, 0.638);
-  /* color of the tracking area */
   border-radius: 200px;
 
 }

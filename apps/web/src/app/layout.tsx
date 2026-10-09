@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Alef, DM_Sans, Lato } from "next/font/google";
+import { Aboreto, Alef, DM_Sans, Shadows_Into_Light } from "next/font/google";
 import "./globals.css";
 import { NavBar } from "@/components/NavBar";
 import { cn } from "@/lib/utils";
@@ -24,6 +24,11 @@ export const metadata: Metadata = {
   title: "Monome",
   description: "Local-first personal knowledge base for your AI chat history",
 };
+const aboreto = Aboreto({
+  subsets: ["latin"],
+  weight: "400",
+  variable: "--font-aboreto",
+})
 
 export default function RootLayout({
   children,
@@ -31,9 +36,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={cn(alef.variable, dm.variable)}>
+    <html lang="en" className={cn(alef.variable, dm.variable, aboreto.variable)}>
       <body
-        className={` ${dm.variable} ${alef.variable} antialiased`}
+        className={` ${dm.variable} ${alef.variable} ${aboreto.variable} antialiased`}
       >
         <ThemeProvider
           attribute="class"
