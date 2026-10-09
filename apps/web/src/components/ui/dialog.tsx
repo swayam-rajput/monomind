@@ -203,12 +203,18 @@ export function DialogPanel({
   };
 
   return (
-    <ScrollArea overscrollContain scrollFade={scrollFade}>
+    <ScrollArea className="overscroll-contain">
       {useRender({
         defaultTagName: "div",
         props: mergeProps<"div">(defaultProps, props),
         render,
       })}
+      {scrollFade && (
+        <div
+          aria-hidden
+          className="pointer-events-none sticky bottom-0 -mt-6 h-6 bg-gradient-to-t from-popover to-transparent"
+        />
+      )}
     </ScrollArea>
   );
 }

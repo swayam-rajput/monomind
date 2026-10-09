@@ -9,7 +9,7 @@ interface ReEmbedButtonProps {
   conversationId: string;
   onSuccess?: () => void;
   size?: "default" | "sm" | "lg";
-  variant?: "default" | "outline" | "ghost";
+  variant?: "default" | "outline" | "ghost" | "secondary";
   className?: string;
   stopPropagation?: boolean;
 }

@@ -73,7 +73,7 @@ export function ChatSelectionDialog({
 
           <DialogDescription>
             Found {conversations.length} conversations in the
-            ChatGPT export. Choose which ones you'd like to import.
+            ChatGPT export. Choose which ones you&apos;d like to import.
           </DialogDescription>
         </DialogHeader>
 
@@ -127,11 +127,11 @@ export function ChatSelectionDialog({
                           {messageCount === 1 ? "" : "s"}
                         </p>
 
-                        {/* {preview && (
+                        {preview && (
                           <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">
                             {preview}...
                           </p>
-                        )} */}
+                        )}
                       </div>
                     </Label>
                   );

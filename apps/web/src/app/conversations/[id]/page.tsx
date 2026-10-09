@@ -108,6 +108,29 @@ export default async function ConversationDetailPage({
               {note.summary}
             </p>
           )}
+
+          {note && (
+            <div className="mt-4 grid gap-4 sm:grid-cols-2">
+              {topics.length > 0 && (
+                <NoteList title="Topics" items={topics} />
+              )}
+
+              {keyIdeas.length > 0 && (
+                <NoteList title="Key ideas" items={keyIdeas} />
+              )}
+
+              {decisions.length > 0 && (
+                <NoteList title="Decisions" items={decisions} />
+              )}
+
+              {openQuestions.length > 0 && (
+                <NoteList
+                  title="Open questions"
+                  items={openQuestions}
+                />
+              )}
+            </div>
+          )}
         </div>
 
         {/* Embedding */}

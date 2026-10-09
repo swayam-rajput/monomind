@@ -60,7 +60,7 @@ export default function ImportPage() {
 
       if (!response.ok) {
         toast.error("Import failed", {
-          description: (result as any).error,
+          description: (result as { error?: string }).error,
         });
         return;
       }

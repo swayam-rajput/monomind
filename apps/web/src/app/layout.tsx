@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Aboreto, Alef, DM_Sans, Shadows_Into_Light } from "next/font/google";
+import { Aboreto, Alef, DM_Sans } from "next/font/google";
 import "./globals.css";
 import { NavBar } from "@/components/NavBar";
 import { cn } from "@/lib/utils";

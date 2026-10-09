@@ -65,7 +65,7 @@ export default function Home() {
               </p>
 
               <h2 className="mt-3 text-3xl font-semibold tracking-tight">
-                Your AI conversations shouldn't disappear.
+                Your AI conversations shouldn&apos;t disappear.
               </h2>
             </div>
 
@@ -79,7 +79,7 @@ export default function Home() {
               <p>
                 But that knowledge is scattered across chat histories and
                 difficult to find again. Searching through old conversations
-                manually doesn't scale.
+                manually doesn&apos;t scale.
               </p>
 
               <p>
@@ -160,7 +160,7 @@ export default function Home() {
           </h2>
 
           <p className="mt-4 text-sm text-muted-foreground">
-            Import your conversation history and see what you've already
+            Import your conversation history and see what you&apos;ve already
             learned.
           </p>
 

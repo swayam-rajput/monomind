@@ -8,6 +8,7 @@ import {
   Copy01Icon,
   ArrowUp01Icon,
   Tick01Icon,
+  PencilEdit01Icon,
 } from "@hugeicons/core-free-icons";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -45,7 +46,6 @@ export default function ChatPage() {
   const [, forceRerender] = useState(0);
   const [suggestions, setSuggestions] =
     useState<string[]>(FALLBACK_PROMPTS);
-  const [activeModel, setActiveModel] = useState<string | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -53,7 +53,7 @@ export default function ChatPage() {
 
   useEffect(() => {
     async function init() {
-      const [countRes, listRes, settingsRes, suggestionsRes] =
+      const [countRes, listRes, suggestionsRes] =
         await Promise.all([
           fetch("/api/conversations/count")
             .then((r) => r.json())
@@ -61,17 +61,10 @@ export default function ChatPage() {
           fetch("/api/chat/session")
             .then((r) => r.json())
             .catch(() => ({ sessions: [] })),
-          fetch("/api/settings")
-            .then((r) => r.json())
-            .catch(() => null),
           fetch("/api/chat/suggestions")
             .then((r) => r.json())
             .catch(() => null),
         ]);
-
-      if (settingsRes?.chatModel) {
-        setActiveModel(settingsRes.chatModel);
-      }
 
       if (suggestionsRes?.suggestions?.length) {
         setSuggestions(suggestionsRes.suggestions);
@@ -119,15 +112,17 @@ export default function ChatPage() {
   }, [sessionId]);
 
   const session = sessionId ? getSessionState(sessionId) : null;
+  const messageCount = session?.messages.length ?? 0;
+  const lastMessageText =
+    messageCount > 0 && session
+      ? session.messages[messageCount - 1]?.text
+      : undefined;
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({
       behavior: "smooth",
     });
-  }, [
-    session?.messages.length,
-    session?.messages[session.messages.length - 1]?.text,
-  ]);
+  }, [messageCount, lastMessageText]);
 
   useEffect(() => {
     const el = textareaRef.current;
@@ -523,18 +518,32 @@ function MessageActions({
   onEdit: () => void;
 }) {
   return (
-    <button
-      type="button"
-      onClick={onCopy}
-      title={isCopied ? "Copied" : "Copy response"}
-      className="flex size-6 items-center justify-center rounded-full text-muted-foreground opacity-0 transition-opacity group-hover/message:opacity-100 hover:bg-background hover:text-foreground"
-    >
-      <HugeiconsIcon
-        icon={isCopied ? Tick01Icon : Copy01Icon}
-        strokeWidth={1.5}
-        className="size-3.5"
-      />
-    </button>
+    <>
+      <button
+        type="button"
+        onClick={onCopy}
+        title={isCopied ? "Copied" : "Copy response"}
+        className="flex size-6 items-center justify-center rounded-full text-muted-foreground opacity-0 transition-opacity group-hover/message:opacity-100 hover:bg-background hover:text-foreground"
+      >
+        <HugeiconsIcon
+          icon={isCopied ? Tick01Icon : Copy01Icon}
+          strokeWidth={1.5}
+          className="size-3.5"
+        />
+      </button>
+      <button
+        type="button"
+        onClick={onEdit}
+        title="Edit as prompt"
+        className="flex size-6 items-center justify-center rounded-full text-muted-foreground opacity-0 transition-opacity group-hover/message:opacity-100 hover:bg-background hover:text-foreground"
+      >
+        <HugeiconsIcon
+          icon={PencilEdit01Icon}
+          strokeWidth={1.5}
+          className="size-3.5"
+        />
+      </button>
+    </>
   );
 }
 
