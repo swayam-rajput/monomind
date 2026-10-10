@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useId, useRef, useState, type CSSProperties } from "react";
+import { useEffect, useId, useRef, useState, Suspense, type CSSProperties } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
@@ -34,6 +34,22 @@ const FALLBACK_PROMPTS = [
 ];
 
 export default function ChatPage() {
+  // useSearchParams() below needs a suspense boundary, otherwise the
+  // build-time static prerender of this page fails.
+  return (
+    <Suspense
+      fallback={
+        <main className="flex h-full items-center justify-center">
+          <div className="size-7 animate-spin rounded-full border-2 border-muted border-t-foreground" />
+        </main>
+      }
+    >
+      <ChatPageContent />
+    </Suspense>
+  );
+}
+
+function ChatPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const sessionIdFromUrl = searchParams.get("session");
