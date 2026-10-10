@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { prisma, searchChunks } from "@monome/db";
 import { getActiveProvider, buildRagPrompt, extractCitedIndexes, type EvidenceItem } from "@monome/ai";
+import type { Conversation } from "@prisma/client";
 
 export const runtime = "nodejs";
 
@@ -67,7 +68,7 @@ export async function POST(request: NextRequest) {
 
         const conversationIds = Array.from(new Set(relevantHits.map((h) => h.conversationId)));
         const conversations = await prisma.conversation.findMany({ where: { id: { in: conversationIds } } });
-        const conversationById = new Map(conversations.map((c: {id: string, title: string, createdAt: Date}) => [c.id, c]));
+        const conversationById = new Map(conversations.map((c: { id: string, title: string, createdAt: Date }) => [c.id, c]));
 
         const evidence: EvidenceItem[] = relevantHits
           .map((hit, i) => {
