@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { prisma } from "@monome/db";
+import { parseNoteField } from "@/lib/notes/parseNoteFields";
 
 export default async function NotesPage() {
   const notes = await prisma.note.findMany({
@@ -25,7 +26,7 @@ export default async function NotesPage() {
       ) : (
         <ul className="flex flex-col divide-y divide-border rounded-lg border border-border bg-card">
           {notes.map((note) => {
-            const topics: string[] = JSON.parse(note.topics);
+            const topics: string[] = parseNoteField(note.topics);
             return (
               <li key={note.id} className="p-4 transition-colors hover:bg-muted/30">
                 <Link href={`/notes/${note.id}`} className="font-medium text-link underline underline-offset-3">

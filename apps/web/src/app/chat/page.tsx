@@ -485,13 +485,8 @@ function AssistantBubble({
                     key={c.index}
                     type="button"
                     variant="outline"
-                    onClick={() => {
-                      console.log(c.messageId)
-                      return onCitationClick(
-                        c.conversationId,
-                        c.messageId,
-                      )
-                    }
+                    onClick={() =>
+                      onCitationClick(c.conversationId, c.messageId)
                     }
                     title={c.conversationTitle}
                     className="group/source"

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { prisma } from "@monome/db";
+import { parseNoteField } from "@/lib/notes/parseNoteFields";
 import { BackfillNotesButton } from "@/components/BackfillNotesButton";
 import { GenerateNoteButton } from "@/app/conversations/[id]/GenerateNoteButton";
 import { DeleteConversationButton } from "@/app/conversations/[id]/DeleteConversationButton";
@@ -48,7 +49,7 @@ export default async function ConversationsPage() {
         <ul className="flex flex-col divide-y divide-border rounded-lg border border-border bg-card">
           {conversations.map((c) => {
             const note = c.notes[0] ?? null;
-            const topics: string[] = note ? JSON.parse(note.topics) : [];
+            const topics: string[] = note ? parseNoteField(note.topics) : [];
             
             // Calculate embedding status
             const totalChunks = c.chunks.length;

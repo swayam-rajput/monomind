@@ -188,15 +188,6 @@ export class OllamaProvider implements LLMProvider {
     }
 
     const result = await res.json();
-    
-    // Additional validation for generate endpoint
-    if (path.includes("/api/generate") && result && typeof result.response === "string") {
-      // Check if the model indicates it's done but with empty content
-      if (result.done === true && result.response.trim().length === 0) {
-        throw new Error(`Model ${this.chatModel} completed but generated no content. This may indicate the prompt was too restrictive or the model encountered an issue.`);
-      }
-    }
-    
     return result;
   }
 }

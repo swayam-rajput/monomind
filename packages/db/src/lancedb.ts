@@ -93,11 +93,23 @@ export async function addChunkVector(embeddingModel: string, row: ChunkRow): Pro
 }
 
 /**
+ * LanceDB's delete() takes a predicate string and has no parameterized
+ * API, so the only safe thing to interpolate is an id we control end-to-end
+ * (a Prisma CUID). Assert that shape here rather than trust every caller:
+ * a malformed id would be interpolated verbatim into a filter string.
+ */
+const SAFE_ID_RE = /^[a-zA-Z0-9_-]+$/;
+
+/**
  * Removes any existing rows for a chunk id, then inserts the new one.
  * Used by the retry path so re-embedding a previously-failed chunk doesn't
  * leave duplicate rows behind.
  */
 export async function upsertChunkVector(embeddingModel: string, row: ChunkRow): Promise<void> {
+  if (!SAFE_ID_RE.test(row.id)) {
+    throw new Error(`Refusing to upsert chunk with unsafe id: ${row.id}`);
+  }
+
   const db = await getConnection();
   const tableName = chunksTableName(embeddingModel);
   const existingNames = await db.tableNames();

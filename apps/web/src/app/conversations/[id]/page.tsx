@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@monome/db";
+import { parseNoteField } from "@/lib/notes/parseNoteFields";
 import { ReEmbedButton } from "@/components/ReEmbedButton";
 import { GenerateNoteButton } from "./GenerateNoteButton";
 import { DeleteConversationButton } from "./DeleteConversationButton";
@@ -24,10 +25,10 @@ export default async function ConversationDetailPage({
 
   const note = conversation.notes[0] ?? null;
 
-  const topics: string[] = note ? JSON.parse(note.topics) : [];
-  const keyIdeas: string[] = note ? JSON.parse(note.keyIdeas) : [];
-  const decisions: string[] = note ? JSON.parse(note.decisions) : [];
-  const openQuestions: string[] = note ? JSON.parse(note.openQuestions) : [];
+  const topics: string[] = note ? parseNoteField(note.topics) : [];
+  const keyIdeas: string[] = note ? parseNoteField(note.keyIdeas) : [];
+  const decisions: string[] = note ? parseNoteField(note.decisions) : [];
+  const openQuestions: string[] = note ? parseNoteField(note.openQuestions) : [];
 
   const totalChunks = conversation.chunks.length;
   const doneCount = conversation.chunks.filter(

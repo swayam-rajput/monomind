@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { prisma } from "@monome/db";
+import { parseNoteField } from "@/lib/notes/parseNoteFields";
 import { NoteEditor } from "./NoteEditor";
 
 export default async function NoteDetailPage({ params }: { params: { id: string } }) {
@@ -19,10 +20,10 @@ export default async function NoteDetailPage({ params }: { params: { id: string 
           conversationTitle: note.conversation.title,
           titleOverride: note.titleOverride,
           summary: note.summary,
-          topics: JSON.parse(note.topics),
-          keyIdeas: JSON.parse(note.keyIdeas),
-          decisions: JSON.parse(note.decisions),
-          openQuestions: JSON.parse(note.openQuestions),
+          topics: parseNoteField(note.topics),
+          keyIdeas: parseNoteField(note.keyIdeas),
+          decisions: parseNoteField(note.decisions),
+          openQuestions: parseNoteField(note.openQuestions),
         }}
       />
     </main>
