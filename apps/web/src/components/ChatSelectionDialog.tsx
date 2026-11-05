@@ -77,7 +77,7 @@ export function ChatSelectionDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <DialogPanel className="max-h-[32rem] overflow-y-auto">
+        <DialogPanel>
           <div className="space-y-4">
             {/* Select all */}
             <div className="flex items-center justify-between border-b pb-4">
@@ -113,25 +113,27 @@ export function ChatSelectionDialog({
                   return (
                     <Label
                       key={id}
-                      className="flex   cursor-pointer  gap-3 rounded-lg p-2 transition-colors hover:bg-muted/50"
+                      className="flex cursor-pointer items-center gap-3 rounded-lg p-2 transition-colors hover:bg-muted/50"
                     >
                       <Checkbox value={id} />
 
-                      <div className="flex w-full justify-between flex-1">
-                        <p className="truncate text-sm font-medium">
-                          {conversation.title}
-                        </p>
+                      <div className="flex min-w-0 flex-1 items-center gap-3">
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-sm font-medium">
+                            {conversation.title}
+                          </p>
 
-                        <p className="mt-1 text-xs text-muted-foreground">
+                          {preview && (
+                            <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">
+                              {preview}...
+                            </p>
+                          )}
+                        </div>
+
+                        <span className="shrink-0 rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium tabular-nums text-muted-foreground">
                           {messageCount} message
                           {messageCount === 1 ? "" : "s"}
-                        </p>
-
-                        {preview && (
-                          <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">
-                            {preview}...
-                          </p>
-                        )}
+                        </span>
                       </div>
                     </Label>
                   );
