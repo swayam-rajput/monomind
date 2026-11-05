@@ -57,6 +57,7 @@ function ChatPageContent() {
   const [pageStatus, setPageStatus] = useState<PageStatus>("loading");
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [sidebarRefreshKey, setSidebarRefreshKey] = useState(0);
+  const [conversationCount, setConversationCount] = useState(0);
 
   const [input, setInput] = useState("");
   const [, forceRerender] = useState(0);
@@ -85,6 +86,8 @@ function ChatPageContent() {
       if (suggestionsRes?.suggestions?.length) {
         setSuggestions(suggestionsRes.suggestions);
       }
+
+      setConversationCount(countRes.count);
 
       if (countRes.count === 0) {
         setPageStatus("empty-db");
@@ -259,9 +262,16 @@ function ChatPageContent() {
         <div className="flex h-full min-h-0 flex-col">
           {messages.length === 0 ? (
             <div className="flex flex-1 flex-col items-center justify-center gap-8 px-6 py-10">
-              <h2 className="text-center text-2xl font-semibold tracking-tight text-foreground">
-                How can I help you today?
-              </h2>
+              <div className="text-center">
+                <h2 className="text-2xl font-semibold tracking-tight text-foreground">
+                  Ask your memory anything
+                </h2>
+                <p className="mt-2 max-w-md text-sm text-muted-foreground">
+                  Answers are grounded in your {conversationCount}{" "}
+                  {conversationCount === 1 ? "imported conversation" : "imported conversations"}. Cited sources link back to the message they
+                  came from.
+                </p>
+              </div>
 
               <div className="flex w-full max-w-xl flex-wrap justify-center gap-2">
                 {suggestions.map((p) => (
@@ -456,54 +466,54 @@ function AssistantBubble({
         </div>
       )}
 
-      <div className="relative overflow-hidden mr-2">
-        <div className="relative pl-1">
-          {m.streaming && !m.text ? (
-            <div className="flex items-center gap-1.5 py-1">
+      <div className="relative">
+        {m.streaming && !m.text ? (
+          <div className="flex items-center gap-1.5 py-1">
+            <span className="typing-dots flex items-center gap-1.5">
+              <span className="size-1.5 rounded-full bg-muted-foreground" />
+              <span className="size-1.5 rounded-full bg-muted-foreground" />
+              <span className="size-1.5 rounded-full bg-muted-foreground" />
+            </span>
+          </div>
+        ) : (
+          <div className="text-[14px] leading-[1.8] tracking-[-0.005em] text-foreground/85 dark:text-white/[0.86]">
+            <Markdown content={m.text} />
 
+            {m.streaming && (
+              <span
+                aria-hidden="true"
+                className="ml-1 inline-block h-[1em] w-[6px] translate-y-[2px] animate-pulse bg-foreground/40 dark:bg-white/40"
+              />
+            )}
+          </div>
+        )}
+
+        {m.citations && m.citations.length > 0 && (
+          <div className="mt-6">
+            <hr />
+
+            <div className="mt-2 flex flex-wrap gap-1.5">
+              {m.citations.map((c) => (
+                <button
+                  key={c.index}
+                  type="button"
+                  onClick={() =>
+                    onCitationClick(c.conversationId, c.messageId)
+                  }
+                  title={c.conversationTitle}
+                  className="group/source flex items-center gap-1.5 rounded-full border border-border bg-card px-2.5 py-1 text-[11px] text-muted-foreground transition-colors hover:border-foreground/20 hover:bg-muted hover:text-foreground"
+                >
+                  <span className="font-medium tabular-nums text-foreground/70 group-hover/source:text-foreground">
+                    [{c.index}]
+                  </span>
+                  <span className="max-w-[140px] truncate">
+                    {c.conversationTitle}
+                  </span>
+                </button>
+              ))}
             </div>
-          ) : (
-            <div className="text-[14px] leading-[1.8] tracking-[-0.005em] text-foreground/85 dark:text-white/[0.86]">
-              <Markdown content={m.text} />
-
-              {m.streaming && (
-                <span
-                  aria-hidden="true"
-                  className="ml-1 inline-block h-[1em] w-[6px] translate-y-[2px] animate-pulse bg-foreground/40 dark:bg-white/40"
-                />
-              )}
-            </div>
-          )}
-
-          {m.citations && m.citations.length > 0 && (
-            <div className="mt-6">
-              <hr />
-
-              <div className="mt-2 flex flex-wrap gap-1.5">
-                {m.citations.map((c) => (
-                  <Button
-                    key={c.index}
-                    type="button"
-                    variant="outline"
-                    onClick={() =>
-                      onCitationClick(c.conversationId, c.messageId)
-                    }
-                    title={c.conversationTitle}
-                    className="group/source"
-                  >
-                    <span className="text-[11px] text-muted-foreground transition-colors group-hover/source:text-foreground">
-                      [{c.index}]
-                    </span>
-
-                    <span className="truncate text-[10px] font-medium text-muted-foreground transition-colors group-hover/source:text-foreground">
-                      {c.conversationTitle}
-                    </span>
-                  </Button>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
+          </div>
+        )}
       </div>
 
       {!isThinking && (
@@ -596,7 +606,7 @@ function ChatInputBar({
         disabled={isStreaming || !input.trim()}
         className="absolute bottom-3 right-3 size-7 rounded-lg"
         aria-label="Send message"
-        title="Send message"
+        title="Send message (Enter)"
       >
         <HugeiconsIcon
           icon={ArrowUp01Icon}

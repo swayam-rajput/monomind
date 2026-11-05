@@ -126,7 +126,7 @@ function ChatMessage({ message }: { message: Message }) {
     <article
       id={`message-${message.id}`}
       className={[
-        " scroll-mt-20 target:bg-green-500/30 group  flex w-full flex-col",
+        "scroll-mt-20 group flex w-full flex-col",
         isUser ? "items-end" : "items-start",
       ].join(" ")}
     >

@@ -29,6 +29,7 @@ export default function ImportPage() {
   >([]);
   const [processing, setProcessing] = useState(false);
   const [importing, setImporting] = useState(false);
+  const [isDragOver, setIsDragOver] = useState(false);
 
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -134,7 +135,32 @@ export default function ImportPage() {
               onSubmit={handleSubmit}
               className="rounded-xl border border-border bg-card"
             >
-              <div className="flex min-h-64 flex-col items-center justify-center px-6 text-center">
+              <div
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  if (!busy) setIsDragOver(true);
+                }}
+                onDragLeave={() => setIsDragOver(false)}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  setIsDragOver(false);
+                  if (busy) return;
+                  const file = e.dataTransfer.files?.[0];
+                  if (file) {
+                    if (fileRef.current) fileRef.current.files = e.dataTransfer.files;
+                    if (!file.name.toLowerCase().endsWith(".zip")) {
+                      toast.error("Drop a .zip file from ChatGPT.");
+                      return;
+                    }
+                    void handleSubmit(e as unknown as React.FormEvent);
+                  }
+                }}
+                className={`flex min-h-64 flex-col items-center justify-center px-6 text-center transition-colors ${
+                  isDragOver
+                    ? "bg-primary/5 ring-2 ring-inset ring-ring/30"
+                    : ""
+                }`}
+              >
                 <div className="flex size-10 items-center justify-center rounded-lg bg-muted text-muted-foreground">
                   ↑
                 </div>

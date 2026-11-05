@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Aboreto, Alef, DM_Sans } from "next/font/google";
+import { Aboreto, DM_Sans } from "next/font/google";
 import "./globals.css";
 import { NavBar } from "@/components/NavBar";
 import { cn } from "@/lib/utils";
@@ -9,12 +9,6 @@ import { ThemeProvider } from "@/components/ui/theme-provider"
 // Loaded from local files (not next/font/google) so the app never needs a
 // network call at build time - consistent with the rest of Monome running
 // fully offline.
-
-const alef = Alef({
-  variable: '--font-alef',
-  subsets: ['latin'],
-  weight: "400"
-});
 
 const dm = DM_Sans({
   subsets: ['latin'],
@@ -36,9 +30,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={cn(alef.variable, dm.variable, aboreto.variable)}>
+    <html lang="en" className={cn(dm.variable, aboreto.variable)}>
       <body
-        className={` ${dm.variable} ${alef.variable} ${aboreto.variable} antialiased`}
+        className={` ${dm.variable} ${aboreto.variable} antialiased`}
       >
         <ThemeProvider
           attribute="class"

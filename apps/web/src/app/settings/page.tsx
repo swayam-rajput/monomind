@@ -208,7 +208,7 @@ export default function SettingsPage() {
     className={cn(
       "h-auto justify-start rounded-md px-3 py-2 text-left transition-all",
       provider === "ollama"
-        ? "bg-background border border-grey-300 text-foreground shadow-sm"
+        ? "bg-background border border-border text-foreground shadow-sm"
         : "text-muted-foreground hover:bg-background/60 hover:text-foreground",
     )}
   >
@@ -225,7 +225,7 @@ export default function SettingsPage() {
     className={cn(
       "h-auto justify-start rounded-md px-3 py-2 text-left transition-all",
       provider === "openai"
-        ? "bg-background border border-grey-300 text-foreground shadow-sm"
+        ? "bg-background border border-border text-foreground shadow-sm"
         : "text-muted-foreground hover:bg-background/60 hover:text-foreground",
     )}
   >
