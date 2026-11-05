@@ -203,7 +203,7 @@ export function DialogPanel({
   };
 
   return (
-    <ScrollArea className="overscroll-contain">
+    <ScrollArea className={cn("min-h-0 flex-1 overscroll-contain", className)}>
       {useRender({
         defaultTagName: "div",
         props: mergeProps<"div">(defaultProps, props),

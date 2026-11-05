@@ -230,4 +230,11 @@ The core pipeline is:
 
 **import → persist → embed → retrieve → generate → cite**
 
+## Developer notes
+
+Non-obvious gotchas and the reasoning behind recent fixes live in
+[challenges.md](challenges.md) — Tailwind silently dropping unknown color
+names, JSX ternary string-literal pitfalls, LanceDB's unparameterized
+`delete()`, and a few others that only show up at build time.
+
 ## License

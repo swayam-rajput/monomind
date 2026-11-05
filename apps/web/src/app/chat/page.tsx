@@ -381,7 +381,7 @@ function UserBubble({ text }: { text: string }) {
           onClick={() => setOpen((v) => !v)}
           aria-expanded={open}
           aria-controls={contentId}
-          className="w-full rounded-[20px] bg-muted/80 px-4 py-2.5 text-left text-sm leading-relaxed text-foreground shadow-2xs transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring dark:bg-[#2f2f2f] dark:text-white"
+          className="w-full rounded-[20px] border border-border bg-card px-4 py-2.5 text-left text-sm leading-relaxed text-foreground shadow-2xs transition-colors hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring dark:bg-card dark:text-white"
         >
           <div className="flex items-start gap-2">
             <div className="min-w-0 flex-1">
@@ -399,7 +399,7 @@ function UserBubble({ text }: { text: string }) {
                   </p>
 
                   {isLong && (
-                    <div className="pointer-events-none absolute inset-x-0 bottom-0 h-10 bg-gradient-to-t from-muted/80 to-transparent dark:from-[#2f2f2f]" />
+                    <div className="pointer-events-none absolute inset-x-0 bottom-0 h-10 bg-gradient-to-t from-card to-transparent dark:from-card" />
                   )}
                 </div>
               )}
@@ -584,7 +584,7 @@ function ChatInputBar({
   isStreaming: boolean;
 }) {
   return (
-    <div className="relative rounded-2xl border border-border bg-card shadow-sm transition-shadow focus-within:border-ring focus-within:ring-1 focus-within:ring-ring/20 dark:border-white/10 dark:bg-[#2f2f2f]">
+    <div className="relative rounded-2xl border border-border bg-card shadow-sm transition-[border-color,box-shadow] duration-200 ease-out focus-within:border-ring focus-within:ring-1 focus-within:ring-ring/20 dark:border-white/10 dark:bg-[#2f2f2f]">
       <Textarea
         ref={textareaRef}
         value={input}
@@ -597,7 +597,7 @@ function ChatInputBar({
           maxHeight: MAX_TEXTAREA_HEIGHT_PX,
           resize: "none",
         }}
-        className="min-h-[52px] w-full resize-none border-0 bg-transparent px-4 py-3 pr-14 text-sm leading-relaxed shadow-none focus-visible:ring-0 dark:bg-transparent dark:text-white dark:placeholder:text-white/30"
+        className="min-h-[52px] w-full resize-none border-0 bg-transparent px-4 py-3 pr-14 text-sm leading-relaxed shadow-none focus-visible:ring-1 focus-visible:ring-ring/25 dark:bg-transparent dark:text-white dark:placeholder:text-white/30"
       />
 
       <Button

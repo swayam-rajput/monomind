@@ -45,8 +45,8 @@
     --destructive-foreground: var(--color-red-700);
 
     /* Borders & inputs */
-    --border: 0 0% 88%;
-    --input: 0 0% 94%;
+    --border: 0 0% 80%;
+    --input: 0 0% 92%;
     --ring: 0 0% 9%;
 
     /* Shape — larger than shadcn default (0.5rem) for a softer feel */
@@ -102,8 +102,8 @@
     --destructive: 0 62% 42%;
     --destructive-foreground: var(--color-red-400);
 
-    --border: 0 0% 20%;
-    --input: 0 0% 15%;
+    --border: 0 0% 18%;
+    --input: 0 0% 14%;
     --ring: 0 0% 80%;
 
     --link: 217 91% 65%;
@@ -164,10 +164,26 @@
     font-family: var(--font-geist-mono), ui-monospace, monospace;
   }
 
-  /* Consistent focus ring across the app */
+  /* Consistent focus ring across the app — thin and offset so it never
+      fights the element's own border. */
   :focus-visible {
     outline: 2px solid hsl(var(--ring));
     outline-offset: 2px;
+  }
+
+  /* Subtle, fast transition on every interactive element. Elements that
+      need their own timing (animations, drag handles) override this. */
+  button,
+  a,
+  input,
+  textarea,
+  select,
+  [role="button"],
+  [role="link"] {
+    transition-property: color, background-color, border-color,
+      opacity, transform;
+    transition-duration: 150ms;
+    transition-timing-function: ease-out;
   }
 
   /* In-app links use the theme link colour, not a hardcoded hex */

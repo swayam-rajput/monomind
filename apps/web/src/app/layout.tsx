@@ -40,10 +40,14 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange>
           <NavBar />
-          {/* NavBar is `fixed` (h-10 = 2.5rem = 40px). pt-10 pushes content
+          {/* NavBar is `fixed` (h-14 = 3.5rem = 56px). pt-14 pushes content
               below it; overflow-auto lets scrollable pages work normally while
-              fixed-height children (like /chat) use h-full against this. */}
-          <main className="min-h-[calc(100dvh-2.5rem)] pt-10">{children}</main>
+              fixed-height children (like /chat) use h-full against this.
+              PageTransition lives in template.tsx, which re-renders on every
+              route change - that's where page animation belongs. */}
+          <main className="min-h-[calc(100dvh-3.5rem)] pt-14">
+            {children}
+          </main>
           <Toaster />
 
         </ThemeProvider>
