@@ -36,7 +36,7 @@ export function NavBar() {
           className="group flex items-center gap-2 transition-transform duration-200 ease-out hover:-translate-y-0.5"
         >
           <span className="text-[11px] font-sans font-normal tracking-[0.2em] text-muted-foreground">
-          Monome
+          Monomind
           </span>
         </Link>
 

@@ -1,22 +1,22 @@
 import type { LLMProvider } from "./provider";
-import { readConfig, type MonomeConfig } from "./config";
+import { readConfig, type MonomindConfig } from "./config";
 import { OllamaProvider } from "./providers/ollama";
 import { OpenAiProvider, AnthropicProvider, GeminiProvider } from "./providers/byok";
 import { withRateLimit } from "./rateLimitedProvider";
 
 /**
  * Builds the active LLMProvider based on the local config file
- * (~/.monome/config.json), already wrapped in the shared rate limiter.
+ * (~/.monomind/config.json), already wrapped in the shared rate limiter.
  * This is the one function the rest of the app should call to get "the
  * current AI provider" - it's the single place that knows how to turn a
  * user's Settings choice into a working provider instance.
  */
-export function getActiveProvider(config: MonomeConfig = readConfig()): LLMProvider {
+export function getActiveProvider(config: MonomindConfig = readConfig()): LLMProvider {
   const raw = buildRawProvider(config);
   return withRateLimit(raw);
 }
 
-function buildRawProvider(config: MonomeConfig): LLMProvider {
+function buildRawProvider(config: MonomindConfig): LLMProvider {
   switch (config.provider) {
     case "ollama":
       return new OllamaProvider(

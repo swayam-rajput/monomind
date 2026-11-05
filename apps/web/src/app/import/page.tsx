@@ -18,7 +18,7 @@ import type {
   ImportPreviewResponse,
   ImportSummary,
   ParsedConversation,
-} from "@monome/types";
+} from "@monomind/types";
 
 export default function ImportPage() {
   const [job, setJob] = useState<ImportJobState>(getImportJobState());
@@ -116,7 +116,7 @@ export default function ImportPage() {
         <header>
           <h1 className="text-2xl font-semibold tracking-tight">Import</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Import your AI conversations into Monome.
+            Import your AI conversations into Monomind.
           </p>
         </header>
 
@@ -170,7 +170,7 @@ export default function ImportPage() {
                 </h2>
 
                 <p className="mt-1 max-w-md text-sm text-muted-foreground">
-                  Select the .zip file from ChatGPT. Monome will find
+                  Select the .zip file from ChatGPT. Monomind will find
                   conversations.json automatically.
                 </p>
 

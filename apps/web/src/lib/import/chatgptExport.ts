@@ -1,4 +1,4 @@
-import type { ParsedConversation, ParsedMessage, MessageRole } from "@monome/types";
+import type { ParsedConversation, ParsedMessage, MessageRole } from "@monomind/types";
 
 /**
  * Parser for ChatGPT's official export format (conversations.json).

@@ -1,10 +1,10 @@
 {
-  "name": "@monome/ai",
+  "name": "@monomind/ai",
   "version": "0.0.0",
   "private": true,
   "main": "./src/index.ts",
   "types": "./src/index.ts",
   "dependencies": {
-    "@monome/types": "*"
+    "@monomind/types": "*"
   }
 }

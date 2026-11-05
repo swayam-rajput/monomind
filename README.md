@@ -1,14 +1,14 @@
-# Monome
+# Monomind
 
 > A local-first knowledge base for your AI conversations.
 
-Monome turns your AI conversation history into searchable, persistent knowledge. Import conversations, generate embeddings locally, search your history semantically, and ask questions against your past conversations with citation-backed answers.
+Monomind turns your AI conversation history into searchable, persistent knowledge. Import conversations, generate embeddings locally, search your history semantically, and ask questions against your past conversations with citation-backed answers.
 
-## Why Monome?
+## Why Monomind?
 
 AI conversations increasingly contain decisions, research, ideas, and working context. But that knowledge is usually trapped inside individual chat sessions.
 
-Monome is built around a simple idea:
+Monomind is built around a simple idea:
 
 **Your AI conversations should compound instead of disappearing.**
 
@@ -44,7 +44,7 @@ Conversations are normalized and stored in SQLite. Long conversations are split 
 
 ### 3. Embed
 
-Monome generates embeddings for the conversation chunks and stores them in LanceDB for semantic search.
+Monomind generates embeddings for the conversation chunks and stores them in LanceDB for semantic search.
 
 ### 4. Search and chat
 
@@ -54,7 +54,7 @@ The model is instructed to answer only from the retrieved evidence and cite the 
 
 ### 5. Notes
 
-Monome can generate structured notes from conversations, extracting summaries, topics, key ideas, decisions, and open questions.
+Monomind can generate structured notes from conversations, extracting summaries, topics, key ideas, decisions, and open questions.
 
 ## Features
 
@@ -90,7 +90,7 @@ Monome can generate structured notes from conversations, extracting summaries, t
 
 ## Architecture
 
-Monome separates structured application data from vector search data.
+Monomind separates structured application data from vector search data.
 
 ### SQLite / Prisma
 
@@ -113,7 +113,7 @@ The vector store is used for retrieval; relational data remains in SQLite.
 
 AI operations are accessed through a provider interface rather than being tightly coupled to a single model provider.
 
-This allows Monome to use local Ollama models while also supporting OpenAI.
+This allows Monomind to use local Ollama models while also supporting OpenAI.
 
 ## RAG pipeline
 
@@ -145,7 +145,7 @@ Citations are represented using deterministic indexes such as `[1]`, `[2]`, and 
 
 ## Local-first
 
-Monome is designed around local storage and local inference.
+Monomind is designed around local storage and local inference.
 
 With Ollama, conversation embeddings and model inference can run locally without sending conversation content to an external AI provider.
 
@@ -181,7 +181,7 @@ ollama pull llama3.1:8b
 ollama pull nomic-embed-text
 ```
 
-Then start Monome:
+Then start Monomind:
 
 ```bash
 pnpm dev
@@ -209,7 +209,7 @@ The web application contains the UI and API routes, while the shared packages is
 
 ## Current limitations
 
-Monome currently focuses on personal AI conversation memory.
+Monomind currently focuses on personal AI conversation memory.
 
 It does not currently provide:
 
@@ -224,7 +224,7 @@ These are deliberately outside the current scope.
 
 ## Status
 
-Monome is an active portfolio project focused on the engineering problem of turning AI conversation history into persistent, searchable memory.
+Monomind is an active portfolio project focused on the engineering problem of turning AI conversation history into persistent, searchable memory.
 
 The core pipeline is:
 

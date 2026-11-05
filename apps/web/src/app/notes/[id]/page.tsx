@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { prisma } from "@monome/db";
+import { prisma } from "@monomind/db";
 import { parseNoteField } from "@/lib/notes/parseNoteFields";
 import { NoteEditor } from "./NoteEditor";
 

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { retryFailedChunks } from "@/lib/embed/embedConversation";
-import { getActiveProvider } from "@monome/ai";
+import { getActiveProvider } from "@monomind/ai";
 
 export const runtime = "nodejs";
 

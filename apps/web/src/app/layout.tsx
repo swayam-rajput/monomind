@@ -7,7 +7,7 @@ import { Toaster } from "@/components/ui/toast";
 import { ThemeProvider } from "@/components/ui/theme-provider"
 
 // Loaded from local files (not next/font/google) so the app never needs a
-// network call at build time - consistent with the rest of Monome running
+// network call at build time - consistent with the rest of Monomind running
 // fully offline.
 
 const dm = DM_Sans({
@@ -15,7 +15,7 @@ const dm = DM_Sans({
   variable: "--font-dm",
 })
 export const metadata: Metadata = {
-  title: "Monome",
+  title: "Monomind",
   description: "Local-first personal knowledge base for your AI chat history",
 };
 const aboreto = Aboreto({

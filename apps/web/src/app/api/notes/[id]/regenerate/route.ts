@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@monome/db";
+import { prisma } from "@monomind/db";
 import { generateNoteForConversation } from "@/lib/notes/generateNotes";
-import { getActiveProvider } from "@monome/ai";
+import { getActiveProvider } from "@monomind/ai";
 
 export const runtime = "nodejs";
 

@@ -1,7 +1,7 @@
-import type { RawNotePayload } from "@monome/types";
+import type { RawNotePayload } from "@monomind/types";
 
 /**
- * Prompt + validation for Phase 4's note generation. Kept in @monome/ai
+ * Prompt + validation for Phase 4's note generation. Kept in @monomind/ai
  * (not the web app) since it's tightly coupled to "what we ask the model
  * for and how we check its answer," not to any UI concern.
  */

@@ -1,4 +1,4 @@
-// Prisma schema for Monome's structured data (SQLite, local file, no server).
+// Prisma schema for Monomind's structured data (SQLite, local file, no server).
 // Vector embeddings live separately in LanceDB (see src/lancedb.ts in this package).
 
 generator client {

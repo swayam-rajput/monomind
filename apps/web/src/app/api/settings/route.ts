@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { readConfig, writeConfig, validateOpenAiKey, getActiveProvider, type MonomeConfig } from "@monome/ai";
+import { readConfig, writeConfig, validateOpenAiKey, getActiveProvider, type MonomeConfig } from "@monomind/ai";
 
 export const runtime = "nodejs";
 
 // Never echo the API key back in responses - only report whether one is set.
-function toClientSafeConfig(config: MonomeConfig) {
+function toClientSafeConfig(config: MonomindConfig) {
   // getActiveProvider() just builds a provider object from config (no
   // network call), so this is safe/cheap to call on every settings read -
   // it's how /chat's model-selector chip knows which model is active

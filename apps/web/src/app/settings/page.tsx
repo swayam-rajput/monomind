@@ -170,7 +170,7 @@ export default function SettingsPage() {
           <div>
             <h1 className="text-2xl font-semibold tracking-tight">Settings</h1>
             <p className="mt-1.5 text-sm text-muted-foreground">
-              Configure the AI backend Monome uses for embeddings, notes, and
+              Configure the AI backend Monomind uses for embeddings, notes, and
               search.
             </p>
           </div>
@@ -196,7 +196,7 @@ export default function SettingsPage() {
                 <div>
                   <h2 className="text-sm font-medium">AI provider</h2>
                   <p className="mt-0.5 text-xs text-muted-foreground">
-                    Choose where Monome runs its language models.
+                    Choose where Monomind runs its language models.
                   </p>
                 </div>
 
@@ -253,7 +253,7 @@ export default function SettingsPage() {
                         Ollama configuration
                       </h2>
                       <p className="mt-0.5 text-xs text-muted-foreground">
-                        Configure the local models Monome uses.
+                        Configure the local models Monomind uses.
                       </p>
                     </div>
 

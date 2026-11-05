@@ -56,12 +56,12 @@ export default function Home() {
           </div>
         </section>
 
-        {/* Why Monome */}
+        {/* Why Monomind */}
         <section className="border-t border-border py-28">
           <div className="grid gap-12 md:grid-cols-[1fr_1.2fr] md:gap-20">
             <div>
               <p className="text-sm font-medium text-muted-foreground">
-                Why Monome?
+                Why Monomind?
               </p>
 
               <h2 className="mt-3 text-3xl font-semibold tracking-tight">
@@ -83,7 +83,7 @@ export default function Home() {
               </p>
 
               <p>
-                Monome turns those conversations into a searchable personal
+                Monomind turns those conversations into a searchable personal
                 knowledge base that you can query when you need it.
               </p>
             </div>
@@ -102,7 +102,7 @@ export default function Home() {
             </h2>
 
             <p className="mt-4 text-sm leading-6 text-muted-foreground">
-              Monome processes your conversation history locally and makes it
+              Monomind processes your conversation history locally and makes it
               available for semantic search and grounded questions.
             </p>
           </div>
@@ -111,7 +111,7 @@ export default function Home() {
             <Step
               number="01"
               title="Import"
-              description="Import your exported AI conversations into Monome."
+              description="Import your exported AI conversations into Monomind."
             />
 
             <Step
@@ -146,7 +146,7 @@ export default function Home() {
             </h2>
 
             <p className="mt-5 text-sm leading-7 text-muted-foreground">
-              Monome uses local storage, local embeddings, and local language
+              Monomind uses local storage, local embeddings, and local language
               models to build your knowledge base without requiring your
               conversation history to be sent to a hosted AI service.
             </p>

@@ -1,5 +1,5 @@
-import { prisma } from "@monome/db";
-import { getActiveProvider, buildNotePrompt, parseNotePayload, NotePayloadError, type LLMProvider } from "@monome/ai";
+import { prisma } from "@monomind/db";
+import { getActiveProvider, buildNotePrompt, parseNotePayload, NotePayloadError, type LLMProvider } from "@monomind/ai";
 
 /**
  * Generates a structured Note for one conversation by calling

@@ -6,7 +6,7 @@ export type { RateLimiterOptions } from "./rateLimiter";
 export { withRateLimit, DEFAULT_RATE_LIMIT } from "./rateLimitedProvider";
 export { getActiveProvider } from "./factory";
 export { readConfig, writeConfig } from "./config";
-export type { MonomeConfig } from "./config";
+export type { MonomindConfig } from "./config";
 export { buildNotePrompt, buildTranscript, parseNotePayload, NotePayloadError } from "./notes";
 export type { MessageForPrompt } from "./notes";
 export { buildRagPrompt, extractCitedIndexes } from "./ragPrompt";

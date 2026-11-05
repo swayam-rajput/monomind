@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import type { ImportSummary, ParsedConversation, ImportPreviewResponse } from "@monome/types";
+import type { ImportSummary, ParsedConversation, ImportPreviewResponse } from "@monomind/types";
 import { parseChatgptExportFile, ConversationParseError } from "@/lib/import/chatgptExport";
 import { parsePastedConversation } from "@/lib/import/pastedConversation";
 import { extractConversationsJson } from "@/lib/import/zip";

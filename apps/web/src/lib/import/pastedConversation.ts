@@ -1,4 +1,4 @@
-import type { ParsedConversation, ParsedMessage, MessageRole } from "@monome/types";
+import type { ParsedConversation, ParsedMessage, MessageRole } from "@monomind/types";
 import { ConversationParseError, parseSingleChatgptConversation } from "./chatgptExport";
 
 /**

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getActiveProvider } from "@monome/ai";
+import { getActiveProvider } from "@monomind/ai";
 
 export const runtime = "nodejs";
 

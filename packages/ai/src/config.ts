@@ -1,16 +1,16 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "fs";
 import { homedir } from "os";
 import { join } from "path";
-import type { AiProviderKind } from "@monome/types";
+import type { AiProviderKind } from "@monomind/types";
 
 /**
  * Local settings file for which AI backend is active, and (if BYOK) the
- * API key to use. Lives at ~/.monome/config.json - outside the repo, never
+ * API key to use. Lives at ~/.monomind/config.json - outside the repo, never
  * committed, never sent anywhere except directly to the chosen provider's
  * API. This is intentionally NOT stored in SQLite: it's a machine-level
  * preference, not app data.
  */
-export interface MonomeConfig {
+export interface MonomindConfig {
   /** Which provider is currently active. Defaults to "ollama" (zero-config). */
   provider: AiProviderKind;
   /** API key for the active BYOK provider, if any. Ignored when provider is "ollama". */
@@ -23,12 +23,12 @@ export interface MonomeConfig {
   ollamaEmbedModel?: string;
 }
 
-const DEFAULT_CONFIG: MonomeConfig = {
+const DEFAULT_CONFIG: MonomindConfig = {
   provider: "ollama",
 };
 
 function configDir(): string {
-  return join(homedir(), ".monome");
+  return join(homedir(), ".monomind");
 }
 
 function configPath(): string {
@@ -36,7 +36,7 @@ function configPath(): string {
 }
 
 /** Reads the local config file, falling back to defaults if it doesn't exist yet or is invalid. */
-export function readConfig(): MonomeConfig {
+export function readConfig(): MonomindConfig {
   const path = configPath();
   if (!existsSync(path)) {
     return { ...DEFAULT_CONFIG };
@@ -53,8 +53,8 @@ export function readConfig(): MonomeConfig {
   }
 }
 
-/** Writes the local config file, creating ~/.monome if needed. */
-export function writeConfig(config: MonomeConfig): void {
+/** Writes the local config file, creating ~/.monomind if needed. */
+export function writeConfig(config: MonomindConfig): void {
   const dir = configDir();
   if (!existsSync(dir)) {
     mkdirSync(dir, { recursive: true });

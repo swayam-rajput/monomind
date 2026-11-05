@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { readConfig } from "@monome/ai";
+import { readConfig } from "@monomind/ai";
 
 export const runtime = "nodejs";
 

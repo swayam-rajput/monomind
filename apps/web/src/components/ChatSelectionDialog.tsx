@@ -14,7 +14,7 @@ import {
 import { Checkbox} from "@/components/ui/checkbox";
 import { CheckboxGroup } from "@/components/ui/checkbox-group";
 import { Label } from "@/components/ui/label";
-import type { ParsedConversation } from "@monome/types";
+import type { ParsedConversation } from "@monomind/types";
 
 interface ChatSelectionDialogProps {
   conversations: ParsedConversation[];

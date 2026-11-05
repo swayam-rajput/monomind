@@ -1,5 +1,5 @@
-import { prisma, chunkMessages, upsertChunkVector } from "@monome/db";
-import { getActiveProvider, type LLMProvider } from "@monome/ai";
+import { prisma, chunkMessages, upsertChunkVector } from "@monomind/db";
+import { getActiveProvider, type LLMProvider } from "@monomind/ai";
 
 /**
  * Chunks one conversation (respecting message boundaries) and embeds each

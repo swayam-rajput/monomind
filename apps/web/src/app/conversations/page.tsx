@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { prisma } from "@monome/db";
+import { prisma } from "@monomind/db";
 import { parseNoteField } from "@/lib/notes/parseNoteFields";
 import { BackfillNotesButton } from "@/components/BackfillNotesButton";
 import { GenerateNoteButton } from "@/app/conversations/[id]/GenerateNoteButton";
