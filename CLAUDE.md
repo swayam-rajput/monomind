@@ -4,9 +4,11 @@
 
 **Monomind** (formerly Monome) is a local-first AI conversation knowledge base — a personal portfolio project that turns exported AI conversations into searchable, persistent memory.
 
-**Stack:** Next.js 14.2.35 (App Router, `src/` layout) + TypeScript + Tailwind CSS. SQLite via Prisma 5.20.0. LanceDB 0.37.1 for vector embeddings. Ollama is the zero-config default; OpenAI is supported as BYOK (Anthropic/Gemini are stubbed). npm monorepo (`apps/web`, `packages/ai`, `packages/db`, `packages/types`) driven by turbo 2.1.3.
+**Stack:** Next.js 14.2.35 (App Router, `src/` layout) + TypeScript + Tailwind CSS. **PostgreSQL (Neon)** via Prisma 5.20.0. LanceDB 0.37.1 for vector embeddings. Ollama is the zero-config default; OpenAI is supported as BYOK (Anthropic/Gemini are stubbed). npm monorepo (`apps/web`, `packages/ai`, `packages/db`, `packages/types`) driven by turbo 2.1.3.
 
-**Pipeline:** import (ChatGPT export zip or pasted JSON) → persist to SQLite → chunk (~500 tokens, message-boundary respecting) → embed → LanceDB → semantic search / RAG chat with `[N]` citations → notes (summary, topics, keyIdeas, decisions, openQuestions).
+**Pipeline:** import (ChatGPT export zip or pasted JSON) → **persist to PostgreSQL** → chunk (~500 tokens, message-boundary respecting) → embed → LanceDB → semantic search / RAG chat with `[N]` citations → notes (summary, topics, keyIdeas, decisions, openQuestions).
+
+**Multi-user isolation:** Anonymous UUID v4 per browser via HTTP-only cookie middleware, row-level filtering on shared Neon PostgreSQL — zero auth required.
 
 ## Commands
 
@@ -33,10 +35,11 @@ S:\Programming\monome\
 │   └── web/                 # Next.js app (all routes, UI, API)
 ├── packages/
 │   ├── ai/                  # AI providers, prompts, config
-│   ├── db/                  # Prisma schema, LanceDB, SQLite
+│   ├── db/                  # Prisma schema, LanceDB, PostgreSQL
 │   └── types/               # Shared TypeScript types
 ├── package.json             # Root workspace config
 ├── turbo.json               # Turbo build pipeline
+├── neon.ts                  # Neon service definitions
 └── README.md
 ```
 
@@ -57,7 +60,7 @@ S:\Programming\monome\
 
 ## Known Quirks
 
-1. **`packages/db/.env`** holds `DATABASE_URL="file:./dev.db"` (relative path — works when run from that package dir). Gitignored. `packages/db/.env.example` exists as a first-run guide.
+1. **`packages/db/.env`** holds `DATABASE_URL` for Neon PostgreSQL (gitignored). `.env.example` has template. Neon `.env.local` has pooled/unpooled URLs.
 
 2. **LanceDB `delete()`** has no parameterized API — only accepts a predicate string. `lancedb.ts` guards with `SAFE_ID_RE = /^[a-zA-Z0-9_-]+$/` before interpolation.
 
@@ -69,9 +72,11 @@ S:\Programming\monome\
 
 6. **DialogPanel scrolling** needs `min-h-0 flex-1` on the ScrollArea so it participates in the flex layout and caps at the popup's `max-h`.
 
-7. **Unsafe `JSON.parse` on note fields** — created `parseNoteField()` that falls back to `[]`.
+7. **Unsafe `JSON.parse` on note fields** — created `parseNoteField()` that falls back to `[]`. Handles both legacy JSON strings and native Postgres arrays.
 
 8. **Config path** — user settings live at `~/.monomind/config.json` (outside the repo, never committed).
+
+9. **Multi-user isolation** — every query must include `where: { userId, ... }`. Middleware sets `monomind_user_id` cookie; `getUserId()` reads it. Default legacy userId is all zeros.
 
 ## UI System
 
@@ -94,8 +99,10 @@ S:\Programming\monome\
 
 - **Branch**: `master`
 - **Last commit**: `5dc575f` (UI fixes)
-- **Uncommitted**: rename Monome → Monomind (47 files), plus navbar/transition work
+- **Uncommitted**: PostgreSQL migration + multi-user isolation + UI overhaul (50+ files)
 - **Config types**: `MonomeConfig` in `@monome/ai` (internal package scope kept as `@monome/...`)
+- **Database**: Neon PostgreSQL (provisioned, migrated)
+- **Auth**: Anonymous UUID cookie isolation (no login required)
 
 ## Recently Fixed (this session)
 
@@ -114,6 +121,12 @@ S:\Programming\monome\
 13. Navbar: awwards-style with sliding underline + memory constellation logo
 14. Color token refinement: tighter borders, global 150ms transitions
 15. Rename: Monome → Monomind across all docs/code (internal `@monome/*` scopes preserved)
+16. **SQLite → PostgreSQL migration** (Neon) with fresh migration history
+17. **Anonymous multi-user isolation**: UUID cookie middleware, row-level `userId` filtering on all models
+18. **Note arrays as native Postgres text[]** (removed JSON.stringify/parse)
+18. **Home page pipeline visualization**: 6-step animated flow with Framer Motion
+19. **Neon integration**: provisioned, .env.local, branch-per-PR ready
+20. **Awwards-style UI**: sliding underline navbar, constellation SVG logo, page transitions
 
 ## Challenges Document
 
