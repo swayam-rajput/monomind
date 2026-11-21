@@ -1,5 +1,5 @@
 {
-  "name": "@monomind/db",
+  "name": "@monome/db",
   "version": "0.0.0",
   "private": true,
   "main": "./src/index.ts",

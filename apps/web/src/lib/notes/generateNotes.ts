@@ -1,5 +1,5 @@
-import { prisma } from "@monomind/db";
-import { getActiveProvider, buildNotePrompt, parseNotePayload, NotePayloadError, type LLMProvider } from "@monomind/ai";
+import { prisma } from "@monome/db";
+import { getActiveProvider, buildNotePrompt, parseNotePayload, NotePayloadError, type LLMProvider } from "@monome/ai";
 
 /**
  * Generates a structured Note for one conversation by calling
@@ -71,23 +71,23 @@ async function requestNotePayload(
   for (let attempt = 1; attempt <= 2; attempt++) {
     try {
       const response = await provider.chat(prompt);
-      
+
       if (!response || response.trim().length === 0) {
         throw new Error("Empty response from AI provider");
       }
-      
+
       const payload = parseNotePayload(response);
       return { ok: true, value: payload };
     } catch (err) {
       const isLastAttempt = attempt === 2;
       const isPayloadError = err instanceof NotePayloadError;
-      
+
       // Log attempt details for debugging
       console.warn(`Note generation attempt ${attempt} failed:`, err instanceof Error ? err.message : "Unknown error");
 
       if (isLastAttempt) {
         let reason = err instanceof Error ? err.message : "Unknown error generating note.";
-        
+
         // Provide more specific error messages based on the error type
         if (reason.includes("empty response")) {
           reason = "The AI model returned an empty response. This may indicate the model is overloaded, the prompt is too complex, or there's a configuration issue with Ollama.";
@@ -96,7 +96,7 @@ async function requestNotePayload(
         } else if (reason.includes("model not found")) {
           reason = "The specified Ollama model was not found. Check your settings and ensure the model is installed.";
         }
-        
+
         return {
           ok: false,
           error: isPayloadError
@@ -104,7 +104,7 @@ async function requestNotePayload(
             : `Chat call failed: ${reason}`,
         };
       }
-      
+
       // First attempt failed - wait a moment before retrying
       await new Promise(resolve => setTimeout(resolve, 1000));
     }

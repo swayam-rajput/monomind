@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@monomind/db";
+import { prisma } from "@monome/db";
 
 export const runtime = "nodejs";
 

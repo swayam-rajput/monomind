@@ -1,5 +1,5 @@
-import { prisma, chunkMessages, upsertChunkVector } from "@monomind/db";
-import { getActiveProvider, type LLMProvider } from "@monomind/ai";
+import { prisma, chunkMessages, upsertChunkVector } from "@monome/db";
+import { getActiveProvider, type LLMProvider } from "@monome/ai";
 
 /**
  * Chunks one conversation (respecting message boundaries) and embeds each
@@ -96,7 +96,7 @@ async function embedAndStoreChunk(
     if (!chunk.text || chunk.text.trim().length === 0) {
       throw new Error("Chunk text is empty");
     }
-    
+
     if (chunk.tokenEstimate > 8000) {
       throw new Error(`Chunk too large: ${chunk.tokenEstimate} tokens (limit: 8000)`);
     }
@@ -127,7 +127,7 @@ async function embedAndStoreChunk(
   } catch (err) {
     const errorMessage = err instanceof Error ? err.message : "Unknown embedding error.";
     console.error(`Embedding failed for chunk ${chunkId}:`, errorMessage);
-    
+
     await prisma.chunk.update({
       where: { id: chunkId },
       data: {

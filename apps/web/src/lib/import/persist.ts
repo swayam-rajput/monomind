@@ -1,5 +1,5 @@
-import { prisma } from "@monomind/db";
-import type { ImportSummary, ImportWarning, ParsedConversation } from "@monomind/types";
+import { prisma } from "@monome/db";
+import type { ImportSummary, ImportWarning, ParsedConversation } from "@monome/types";
 
 /**
  * Writes parsed conversations to SQLite as the immutable raw layer.

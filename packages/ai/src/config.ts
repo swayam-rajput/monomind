@@ -1,7 +1,7 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "fs";
 import { homedir } from "os";
 import { join } from "path";
-import type { AiProviderKind } from "@monomind/types";
+import type { AiProviderKind } from "@monome/types";
 
 /**
  * Local settings file for which AI backend is active, and (if BYOK) the

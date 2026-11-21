@@ -1,7 +1,7 @@
-import type { RawNotePayload } from "@monomind/types";
+import type { RawNotePayload } from "@monome/types";
 
 /**
- * Prompt + validation for Phase 4's note generation. Kept in @monomind/ai
+ * Prompt + validation for Phase 4's note generation. Kept in @monome/ai
  * (not the web app) since it's tightly coupled to "what we ask the model
  * for and how we check its answer," not to any UI concern.
  */
@@ -154,18 +154,18 @@ function isStringArray(value: unknown): value is string[] {
  */
 function extractJsonObject(text: string): string {
   const trimmed = text.trim();
-  
+
   if (!trimmed) {
     throw new Error("Response is completely empty");
   }
-  
+
   // Handle common markdown fence patterns
   const fencedPatterns = [
     /^```json\s*\n([\s\S]*?)\n\s*```$/,
     /^```\s*\n([\s\S]*?)\n\s*```$/,
     /^`([^`]*)`$/
   ];
-  
+
   for (const pattern of fencedPatterns) {
     const match = trimmed.match(pattern);
     if (match && match[1]) {
@@ -175,7 +175,7 @@ function extractJsonObject(text: string): string {
       }
     }
   }
-  
+
   // If already clean JSON, return as-is
   if (trimmed.startsWith("{") && trimmed.endsWith("}")) {
     return trimmed;
@@ -186,7 +186,7 @@ function extractJsonObject(text: string): string {
   let braceCount = 0;
   let startIndex = -1;
   let endIndex = -1;
-  
+
   for (let i = 0; i < trimmed.length; i++) {
     const char = trimmed[i];
     if (char === '{') {
@@ -200,7 +200,7 @@ function extractJsonObject(text: string): string {
       }
     }
   }
-  
+
   if (startIndex !== -1 && endIndex !== -1) {
     return trimmed.substring(startIndex, endIndex + 1);
   }

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma, searchChunks } from "@monomind/db";
-import { getActiveProvider } from "@monomind/ai";
+import { prisma, searchChunks } from "@monome/db";
+import { getActiveProvider } from "@monome/ai";
 
 export const runtime = "nodejs";
 

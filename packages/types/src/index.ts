@@ -1,6 +1,6 @@
 /**
  * Shared TypeScript types used across the Monomind monorepo.
- * Keep this package dependency-free (no imports from @monomind/ai or @monomind/db)
+ * Keep this package dependency-free (no imports from @monome/ai or @monome/db)
  * so it can be safely imported anywhere without creating cycles.
  */
 

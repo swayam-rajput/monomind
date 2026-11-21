@@ -18,7 +18,7 @@ import type {
   ImportPreviewResponse,
   ImportSummary,
   ParsedConversation,
-} from "@monomind/types";
+} from "@monome/types";
 
 export default function ImportPage() {
   const [job, setJob] = useState<ImportJobState>(getImportJobState());

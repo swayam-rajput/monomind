@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { prisma } from "@monomind/db";
+import { prisma } from "@monome/db";
 import { parseNoteField } from "@/lib/notes/parseNoteFields";
 import { BackfillNotesButton } from "@/components/BackfillNotesButton";
 import { GenerateNoteButton } from "@/app/conversations/[id]/GenerateNoteButton";
@@ -50,13 +50,13 @@ export default async function ConversationsPage() {
           {conversations.map((c) => {
             const note = c.notes[0] ?? null;
             const topics: string[] = note ? parseNoteField(note.topics) : [];
-            
+
             // Calculate embedding status
             const totalChunks = c.chunks.length;
             const doneChunks = c.chunks.filter(chunk => chunk.embeddingStatus === "done").length;
             const failedChunks = c.chunks.filter(chunk => chunk.embeddingStatus === "failed").length;
             const pendingChunks = c.chunks.filter(chunk => chunk.embeddingStatus === "pending").length;
-            
+
             const isFullyEmbedded = totalChunks > 0 && doneChunks === totalChunks;
             const hasEmbeddingIssues = failedChunks > 0;
             const isPartiallyEmbedded = doneChunks > 0 && doneChunks < totalChunks;
@@ -117,16 +117,16 @@ export default async function ConversationsPage() {
 
                 <div className="mt-2 flex items-center gap-2">
                   {!note && !hasNoEmbedding && !hasEmbeddingIssues && !isPartiallyEmbedded  && <GenerateNoteButton conversationId={c.id} stopPropagation />}
-                  
+
                   {(hasNoEmbedding || hasEmbeddingIssues || isPartiallyEmbedded) && (
-                    <ClientReEmbedButton 
-                      conversationId={c.id} 
+                    <ClientReEmbedButton
+                      conversationId={c.id}
                       size="sm"
                       variant="outline"
-                      stopPropagation 
+                      stopPropagation
                     />
                   )}
-                  
+
                   <DeleteConversationButton conversationId={c.id} stopPropagation size="sm" />
                 </div>
               </li>

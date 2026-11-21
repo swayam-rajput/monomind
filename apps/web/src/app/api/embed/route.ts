@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { embedConversation } from "@/lib/embed/embedConversation";
-import { getActiveProvider } from "@monomind/ai";
+import { getActiveProvider } from "@monome/ai";
 
 export const runtime = "nodejs";
 

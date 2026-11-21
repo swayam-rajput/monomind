@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
-import { prisma, searchChunks } from "@monomind/db";
-import { getActiveProvider, buildRagPrompt, extractCitedIndexes, type EvidenceItem } from "@monomind/ai";
+import { prisma, searchChunks } from "@monome/db";
+import { getActiveProvider, buildRagPrompt, extractCitedIndexes, type EvidenceItem } from "@monome/ai";
 
 export const runtime = "nodejs";
 

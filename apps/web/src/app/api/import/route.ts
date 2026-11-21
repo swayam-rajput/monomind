@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import type { ImportSummary, ParsedConversation, ImportPreviewResponse } from "@monomind/types";
+import type { ImportSummary, ParsedConversation, ImportPreviewResponse } from "@monome/types";
 import { parseChatgptExportFile, ConversationParseError } from "@/lib/import/chatgptExport";
 import { parsePastedConversation } from "@/lib/import/pastedConversation";
 import { extractConversationsJson } from "@/lib/import/zip";
@@ -34,24 +34,24 @@ export async function POST(request: NextRequest) {
       const { parsed, skipped } = parseChatgptExportFile(conversationsJson);
 
       // Return parsed conversations for selection instead of importing immediately
-      return NextResponse.json({ 
+      return NextResponse.json({
         type: "preview",
         conversations: parsed,
-        skipped 
+        skipped
       } satisfies ImportPreviewResponse);
     }
 
     // Path 2: JSON body with selected conversations from preview or pasted conversation
     if (contentType.includes("application/json")) {
       const body = await request.json();
-      
+
       // Handle selected conversations from ChatGPT export
       if (body.selectedConversations && Array.isArray(body.selectedConversations)) {
         const conversations = body.selectedConversations as ParsedConversation[];
         const summary = await persistParsedConversations(conversations, body.skipped || []);
         return NextResponse.json(summary satisfies ImportSummary);
       }
-      
+
       // Handle single pasted conversation (existing functionality)
       if (typeof body?.pastedText === "string" && body.pastedText.trim().length > 0) {
         const conversation = parsePastedConversation(body.pastedText);

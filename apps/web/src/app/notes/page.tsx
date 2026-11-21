@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { prisma } from "@monomind/db";
+import { prisma } from "@monome/db";
 import { parseNoteField } from "@/lib/notes/parseNoteFields";
 
 export default async function NotesPage() {

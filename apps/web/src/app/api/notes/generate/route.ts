@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { generateNoteForConversation } from "@/lib/notes/generateNotes";
-import { getActiveProvider } from "@monomind/ai";
+import { getActiveProvider } from "@monome/ai";
 
 export const runtime = "nodejs";
 
