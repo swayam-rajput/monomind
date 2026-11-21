@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { readConfig, writeConfig, validateOpenAiKey, getActiveProvider, type MonomeConfig } from "@monomind/ai";
+import { readConfig, writeConfig, validateOpenAiKey, getActiveProvider } from "@monome/ai";
 
 export const runtime = "nodejs";
 
