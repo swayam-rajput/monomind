@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma, searchChunks } from "@monome/db";
 import { getActiveProvider } from "@monome/ai";
+import { cookies } from "next/headers";
 
 export const runtime = "nodejs";
 
@@ -25,6 +26,9 @@ export interface SearchApiResult {
  * source Conversation (and Note, if one exists) in SQLite.
  */
 export async function POST(request: NextRequest) {
+  const cookieStore = await cookies();
+  const userId = cookieStore.get("monomind_user_id")?.value ?? "00000000-0000-0000-0000-000000000000";
+
   const body = await request.json();
   const { query } = body as { query?: string };
 
@@ -43,7 +47,7 @@ export async function POST(request: NextRequest) {
 
     const conversationIds = Array.from(new Set(hits.map((h) => h.conversationId)));
     const conversations = await prisma.conversation.findMany({
-      where: { id: { in: conversationIds } },
+      where: { id: { in: conversationIds }, userId },
       include: { notes: true },
     });
     const conversationById = new Map(

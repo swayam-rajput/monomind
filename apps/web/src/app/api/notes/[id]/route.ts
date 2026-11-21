@@ -21,10 +21,10 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
       data: {
         ...(titleOverride !== undefined && { titleOverride }),
         ...(summary !== undefined && { summary }),
-        ...(topics !== undefined && { topics: JSON.stringify(topics) }),
-        ...(keyIdeas !== undefined && { keyIdeas: JSON.stringify(keyIdeas) }),
-        ...(decisions !== undefined && { decisions: JSON.stringify(decisions) }),
-        ...(openQuestions !== undefined && { openQuestions: JSON.stringify(openQuestions) }),
+        ...(topics !== undefined && { topics }),
+        ...(keyIdeas !== undefined && { keyIdeas }),
+        ...(decisions !== undefined && { decisions }),
+        ...(openQuestions !== undefined && { openQuestions }),
       },
     });
     return NextResponse.json(note);

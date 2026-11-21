@@ -4,7 +4,7 @@ import { getActiveProvider, buildNotePrompt, parseNotePayload, NotePayloadError,
 /**
  * Generates a structured Note for one conversation by calling
  * provider.chat() with a JSON-schema prompt, validating the response, and
- * storing it in SQLite. Always sets conversationId from the function
+ * storing it in Postgres. Always sets conversationId from the function
  * argument (never from anything the model returns), so a note can never
  * exist without a traceable, guaranteed-correct source.
  *
@@ -42,20 +42,20 @@ export async function generateNoteForConversation(
     return { ok: false, error: payload.error };
   }
 
-  const existing = await prisma.note.findFirst({ where: { conversationId }, select: { id: true } });
+  const existing = await prisma.note.findFirst({ where: { conversationId }, select: { id: true, userId: true } });
 
   const data = {
     titleOverride: payload.value.title,
     summary: payload.value.summary,
-    topics: JSON.stringify(clampTopics(payload.value.topics)),
-    keyIdeas: JSON.stringify(payload.value.keyIdeas),
-    decisions: JSON.stringify(payload.value.decisions),
-    openQuestions: JSON.stringify(payload.value.openQuestions),
+    topics: clampTopics(payload.value.topics),
+    keyIdeas: payload.value.keyIdeas,
+    decisions: payload.value.decisions,
+    openQuestions: payload.value.openQuestions,
   };
 
   const note = existing
     ? await prisma.note.update({ where: { id: existing.id }, data })
-    : await prisma.note.create({ data: { conversationId, ...data } });
+    : await prisma.note.create({ data: { conversationId, userId: "00000000-0000-0000-0000-000000000000", ...data } });
 
   return { ok: true, noteId: note.id };
 }

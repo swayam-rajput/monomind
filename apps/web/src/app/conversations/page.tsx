@@ -6,12 +6,15 @@ import { GenerateNoteButton } from "@/app/conversations/[id]/GenerateNoteButton"
 import { DeleteConversationButton } from "@/app/conversations/[id]/DeleteConversationButton";
 import { ClientReEmbedButton } from "@/components/ClientReEmbedButton";
 import { DeleteAllButton } from "./DeleteAllButton";
+import { getUserId } from "@/lib/get-user-id";
 
 // Server component: reads directly from SQLite via Prisma at request time.
 // No client-side fetching, no AI provider call - this page must always
 // load regardless of whether Ollama or any BYOK provider is reachable.
 export default async function ConversationsPage() {
+  const userId = await getUserId();
   const conversations = await prisma.conversation.findMany({
+    where: { userId },
     orderBy: { createdAt: "desc" },
     include: {
       _count: { select: { messages: true } },

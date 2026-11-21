@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@monome/db";
+import { cookies } from "next/headers";
 
 export const runtime = "nodejs";
 
@@ -9,12 +10,15 @@ export const runtime = "nodejs";
  * of a bare id - same idea as ChatGPT's sidebar list.
  */
 export async function GET() {
+  const cookieStore = await cookies();
+  const userId = cookieStore.get("monomind_user_id")?.value ?? "00000000-0000-0000-0000-000000000000";
+
   const sessions = await prisma.chatSession.findMany({
     // "New chat" creates an empty session row immediately (so a message
     // can be posted to it), but an empty thread shouldn't clutter the
     // sidebar as a visible entry until it actually has content - this is
     // purely a list-visibility filter, the row itself still exists.
-    where: { messages: { some: {} } },
+    where: { userId, messages: { some: {} } },
     orderBy: { createdAt: "desc" },
     include: {
       messages: { orderBy: { createdAt: "asc" }, take: 1 },
@@ -47,6 +51,9 @@ export async function GET() {
 
 /** Creates a new, empty chat session - the "New chat" action. */
 export async function POST() {
-  const session = await prisma.chatSession.create({ data: {} });
+  const cookieStore = await cookies();
+  const userId = cookieStore.get("monomind_user_id")?.value ?? "00000000-0000-0000-0000-000000000000";
+
+  const session = await prisma.chatSession.create({ data: { userId } });
   return NextResponse.json({ sessionId: session.id });
 }

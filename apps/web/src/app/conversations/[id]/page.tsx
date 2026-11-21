@@ -6,14 +6,16 @@ import { ReEmbedButton } from "@/components/ReEmbedButton";
 import { GenerateNoteButton } from "./GenerateNoteButton";
 import { DeleteConversationButton } from "./DeleteConversationButton";
 import { MessagesSection } from "./MessagesSection";
+import { getUserId } from "@/lib/get-user-id";
 
 export default async function ConversationDetailPage({
   params,
 }: {
   params: { id: string };
 }) {
+  const userId = await getUserId();
   const conversation = await prisma.conversation.findUnique({
-    where: { id: params.id },
+    where: { id: params.id, userId },
     include: {
       messages: { orderBy: { createdAt: "asc" } },
       chunks: { orderBy: { order: "asc" } },

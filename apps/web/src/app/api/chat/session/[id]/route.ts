@@ -1,12 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@monome/db";
+import { cookies } from "next/headers";
 
 export const runtime = "nodejs";
 
 /** Returns one chat session's full message history. */
 export async function GET(_request: NextRequest, { params }: { params: { id: string } }) {
+  const cookieStore = await cookies();
+  const userId = cookieStore.get("monomind_user_id")?.value ?? "00000000-0000-0000-0000-000000000000";
+
   const session = await prisma.chatSession.findUnique({
-    where: { id: params.id },
+    where: { id: params.id, userId },
     include: { messages: { orderBy: { createdAt: "asc" } } },
   });
 
@@ -28,8 +32,11 @@ export async function GET(_request: NextRequest, { params }: { params: { id: str
 
 /** Deletes a chat session and all its messages (cascade, per schema). */
 export async function DELETE(_request: NextRequest, { params }: { params: { id: string } }) {
+  const cookieStore = await cookies();
+  const userId = cookieStore.get("monomind_user_id")?.value ?? "00000000-0000-0000-0000-000000000000";
+
   try {
-    await prisma.chatSession.delete({ where: { id: params.id } });
+    await prisma.chatSession.delete({ where: { id: params.id, userId } });
     return NextResponse.json({ ok: true });
   } catch (err) {
     return NextResponse.json(

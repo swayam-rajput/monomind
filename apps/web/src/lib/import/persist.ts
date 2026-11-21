@@ -11,7 +11,8 @@ import type { ImportSummary, ImportWarning, ParsedConversation } from "@monome/t
  */
 export async function persistParsedConversations(
   parsedConversations: ParsedConversation[],
-  preSkipped: { identifier: string; reason: string }[] = []
+  preSkipped: { identifier: string; reason: string }[] = [],
+  userId: string
 ): Promise<ImportSummary> {
   const warnings: ImportWarning[] = preSkipped.map((s) => ({
     identifier: s.identifier,
@@ -25,7 +26,7 @@ export async function persistParsedConversations(
     // in JS — Prisma v5 doesn't support filtering by relation aggregate
     // count in a where clause without raw SQL.
     const candidates = await prisma.conversation.findMany({
-      where: { title: conversation.title, source: conversation.source },
+      where: { userId, title: conversation.title, source: conversation.source },
       include: { _count: { select: { messages: true } } },
     });
 
@@ -43,7 +44,7 @@ export async function persistParsedConversations(
     }
 
     try {
-      const id = await persistOne(conversation);
+      const id = await persistOne(conversation, userId);
       importedConversationIds.push(id);
     } catch (err) {
       warnings.push({
@@ -62,11 +63,12 @@ export async function persistParsedConversations(
   };
 }
 
-async function persistOne(conversation: ParsedConversation): Promise<string> {
+async function persistOne(conversation: ParsedConversation, userId: string): Promise<string> {
   const created = await prisma.conversation.create({
     data: {
       title: conversation.title,
       source: conversation.source,
+      userId,
       messages: {
         create: conversation.messages.map((m) => ({
           role: m.role,

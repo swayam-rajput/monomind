@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@monome/db";
+import { cookies } from "next/headers";
 
 export const runtime = "nodejs";
 
@@ -12,8 +13,11 @@ export const runtime = "nodejs";
  * progress bar.
  */
 export async function GET() {
+  const cookieStore = await cookies();
+  const userId = cookieStore.get("monomind_user_id")?.value ?? "00000000-0000-0000-0000-000000000000";
+
   const conversations = await prisma.conversation.findMany({
-    where: { notes: { none: {} } },
+    where: { userId, notes: { none: {} } },
     select: { id: true, title: true },
     orderBy: { createdAt: "asc" },
   });

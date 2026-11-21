@@ -21,7 +21,9 @@ export async function GET() {
   if (notes.length > 0) {
     const topics = new Set<string>();
     for (const note of notes) {
-      for (const t of JSON.parse(note.topics) as string[]) topics.add(t);
+      // topics is now a native string[] array (Postgres), but handle legacy JSON strings
+      const topicArray = Array.isArray(note.topics) ? note.topics : JSON.parse(note.topics);
+      for (const t of topicArray as string[]) topics.add(t);
     }
     const firstTopic = Array.from(topics)[0];
     if (firstTopic) suggestions.push(`What have I discussed about ${firstTopic}?`);

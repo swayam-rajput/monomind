@@ -1,9 +1,12 @@
 import Link from "next/link";
 import { prisma } from "@monome/db";
 import { parseNoteField } from "@/lib/notes/parseNoteFields";
+import { getUserId } from "@/lib/get-user-id";
 
 export default async function NotesPage() {
+  const userId = await getUserId();
   const notes = await prisma.note.findMany({
+    where: { userId },
     orderBy: { updatedAt: "desc" },
     include: { conversation: true },
   });

@@ -4,6 +4,7 @@ import { parseChatgptExportFile, ConversationParseError } from "@/lib/import/cha
 import { parsePastedConversation } from "@/lib/import/pastedConversation";
 import { extractConversationsJson } from "@/lib/import/zip";
 import { persistParsedConversations } from "@/lib/import/persist";
+import { cookies } from "next/headers";
 
 // This route only ever writes to the local SQLite file via Prisma - no
 // outbound network calls, no AI calls. Runs on Node (not the edge runtime)
@@ -11,6 +12,9 @@ import { persistParsedConversations } from "@/lib/import/persist";
 export const runtime = "nodejs";
 
 export async function POST(request: NextRequest) {
+  const cookieStore = await cookies();
+  const userId = cookieStore.get("monomind_user_id")?.value ?? "00000000-0000-0000-0000-000000000000";
+
   const contentType = request.headers.get("content-type") ?? "";
 
   try {
@@ -48,14 +52,14 @@ export async function POST(request: NextRequest) {
       // Handle selected conversations from ChatGPT export
       if (body.selectedConversations && Array.isArray(body.selectedConversations)) {
         const conversations = body.selectedConversations as ParsedConversation[];
-        const summary = await persistParsedConversations(conversations, body.skipped || []);
+        const summary = await persistParsedConversations(conversations, body.skipped || [], userId);
         return NextResponse.json(summary satisfies ImportSummary);
       }
 
       // Handle single pasted conversation (existing functionality)
       if (typeof body?.pastedText === "string" && body.pastedText.trim().length > 0) {
         const conversation = parsePastedConversation(body.pastedText);
-        const summary = await persistParsedConversations([conversation]);
+        const summary = await persistParsedConversations([conversation], [], userId);
         return NextResponse.json(summary satisfies ImportSummary);
       }
 

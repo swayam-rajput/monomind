@@ -1,0 +1,30 @@
+{
+  "img_src": "./projects/monomind.png",
+  "title": "Monomind",
+  "description": "A local-first personal knowledge base that imports AI conversations (ChatGPT exports), generates embeddings for semantic search, and uses RAG with citation-backed answers from your conversation history. Features anonymous multi-user isolation via UUID cookies — zero auth required.",
+  "tech_stack": [
+    "RAG",
+    "Next.js 14",
+    "TypeScript",
+    "Prisma",
+    "PostgreSQL (Neon)",
+    "LanceDB",
+    "Ollama",
+    "Turbo Monorepo"
+  ],
+  "link": "IN PRODUCTION",
+  "link_url": "",
+  "features": [
+    "Conversation import (ChatGPT .zip + pasted JSON)",
+    "Token-aware chunking (~500 tokens, message-boundary respecting)",
+    "Local embeddings via Ollama (nomic-embed-text)",
+    "LanceDB vector storage with cosine similarity search",
+    "RAG chat with [N] citations linking to source messages",
+    "Structured notes: summary, topics, decisions, open questions",
+    "Anonymous multi-user isolation (UUID cookie, row-level security)",
+    "Neon PostgreSQL with Prisma schema",
+    "Ollama + OpenAI BYOK provider abstraction",
+    "Awwards-style UI with animated navbar, SVG logo, page transitions"
+  ],
+  "architecture": "import → persist (PostgreSQL) → chunk → embed (Ollama) → vector index (LanceDB) → semantic search → RAG + citations → notes"
+}

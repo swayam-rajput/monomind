@@ -2,10 +2,12 @@ import { notFound } from "next/navigation";
 import { prisma } from "@monome/db";
 import { parseNoteField } from "@/lib/notes/parseNoteFields";
 import { NoteEditor } from "./NoteEditor";
+import { getUserId } from "@/lib/get-user-id";
 
 export default async function NoteDetailPage({ params }: { params: { id: string } }) {
+  const userId = await getUserId();
   const note = await prisma.note.findUnique({
-    where: { id: params.id },
+    where: { id: params.id, userId },
     include: { conversation: true },
   });
 

@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { prisma, searchChunks } from "@monome/db";
 import { getActiveProvider, buildRagPrompt, extractCitedIndexes, type EvidenceItem } from "@monome/ai";
+import { cookies } from "next/headers";
 
 export const runtime = "nodejs";
 
@@ -37,6 +38,10 @@ export async function POST(request: NextRequest) {
     return new Response(JSON.stringify({ error: "'sessionId' is required." }), { status: 400 });
   }
 
+  // Get userId from cookie for multi-user isolation
+  const cookieStore = await cookies();
+  const userId = cookieStore.get("monomind_user_id")?.value ?? "00000000-0000-0000-0000-000000000000";
+
   const provider = getActiveProvider();
 
   // Persist the user's question immediately, before doing anything AI-
@@ -66,7 +71,9 @@ export async function POST(request: NextRequest) {
         }
 
         const conversationIds = Array.from(new Set(relevantHits.map((h) => h.conversationId)));
-        const conversations = await prisma.conversation.findMany({ where: { id: { in: conversationIds } } });
+        const conversations = await prisma.conversation.findMany({
+          where: { id: { in: conversationIds }, userId }
+        });
         const conversationById = new Map<
           (typeof conversations)[number]["id"],
           (typeof conversations)[number]

@@ -1,4 +1,6 @@
-// Prisma schema for Monomind's structured data (SQLite, local file, no server).
+// Prisma schema for Monomind's structured data (PostgreSQL).
+// User isolation is achieved via userId on every model — each browser gets its own UUID stored in localStorage.
+// To enable user auth later, add proper User model with email etc.
 // Vector embeddings live separately in LanceDB (see src/lancedb.ts in this package).
 
 generator client {
@@ -6,22 +8,24 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
-/// A single imported chat export conversation. This is part of the
-/// immutable raw layer: once imported, its fields are never overwritten.
+/// A single imported chat export conversation. Partitioned by userId.
 model Conversation {
-  id        String   @id @default(cuid())
-  title     String
+  id             String       @id @default(cuid())
+  userId         String
+  title          String
   /// Where this conversation came from. Only "chatgpt-export" and "pasted" for v0.
-  source    String
-  createdAt DateTime @default(now())
+  source         String
+  createdAt      DateTime     @default(now())
 
   messages Message[]
   notes    Note[]
   chunks   Chunk[]
+
+  @@index([userId])
 }
 
 /// A single message within a conversation. Immutable raw layer.
@@ -39,9 +43,7 @@ model Message {
 
 /// A chunk of a conversation prepared for embedding (~500 tokens),
 /// respecting message boundaries. The chunk TEXT and metadata live here in
-/// SQLite; the actual embedding VECTOR lives in LanceDB (see src/lancedb.ts).
-/// This table exists so we can track per-chunk embedding status and retry
-/// just the failed ones without re-scanning LanceDB.
+/// Postgres; the actual embedding VECTOR lives in LanceDB (see src/lancedb.ts).
 model Chunk {
   id             String       @id @default(cuid())
   conversationId String
@@ -56,7 +58,6 @@ model Chunk {
   /// Rough token count (chars/4), for debugging chunk sizing.
   tokenEstimate  Int
   /// Which embedding model produced (or will produce) this chunk's vector.
-  /// Determines which LanceDB table the vector lives in.
   embeddingModel String
   /// "pending" | "done" | "failed"
   embeddingStatus String      @default("pending")
@@ -69,15 +70,16 @@ model Chunk {
   @@index([embeddingStatus])
 }
 
-/// A single "ask your knowledge base" chat thread. Currently one implicit
-/// session per browser (see ChatMessage below) - no multi-thread UI yet,
-/// but the schema supports it so that's an additive change later, not a
-/// migration.
+/// A single "ask your knowledge base" chat thread. Partitioned by userId.
 model ChatSession {
   id        String   @id @default(cuid())
+  userId    String
+  title     String?  @default("New Chat")
   createdAt DateTime @default(now())
 
   messages ChatMessage[]
+
+  @@index([userId])
 }
 
 /// A single message in a chat thread. Persisted as it's sent/received so
@@ -90,7 +92,6 @@ model ChatMessage {
   role          String
   content       String
   /// Stored as a JSON-encoded array of { index, conversationId, conversationTitle }.
-  /// Empty array (never null) for user messages and assistant messages with no citations.
   citations     String      @default("[]")
   createdAt     DateTime    @default(now())
 
@@ -102,23 +103,19 @@ model ChatMessage {
 /// conversation so nothing is unsourced. Editable/deletable by the user.
 model Note {
   id             String       @id @default(cuid())
+  userId         String
   conversationId String
   conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
-  /// A model-suggested better title, only set when the model judged the
-  /// original conversation title unhelpful. Null means "use the
-  /// conversation's own title" - this never overwrites the raw layer.
-  titleOverride  String?
   summary        String
-  /// Stored as a JSON-encoded string array (SQLite has no native array type).
-  topics         String
-  /// Stored as a JSON-encoded string array (SQLite has no native array type).
-  keyIdeas       String
-  /// Stored as a JSON-encoded string array (SQLite has no native array type).
-  decisions      String @default("[]")
-  /// Stored as a JSON-encoded string array (SQLite has no native array type).
-  openQuestions  String @default("[]")
+  /// Postgres native text arrays.
+  topics         String[]
+  keyIdeas       String[]
+  decisions      String[] @default([])
+  openQuestions  String[] @default([])
+  titleOverride  String?
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
 
   @@index([conversationId])
+  @@index([userId])
 }
